@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "StarterKit",
+    "slug": "StarterKit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "StarterKit",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cesswhite.starterkit",
+      "icon": "./assets/StartetKitIcon.icon"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.cesswhite.starterkit"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-screen.png",
+          "imageWidth": 1206,
+          "imageHeight": 2622,
+          "resizeMode": "cover"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

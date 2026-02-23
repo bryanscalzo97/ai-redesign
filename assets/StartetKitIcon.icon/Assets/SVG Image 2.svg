@@ -1,0 +1,21 @@
+<svg width="1280" height="1280" viewBox="0 0 1280 1280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M1280 1120H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 960H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 800H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 640H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 480H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 320H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 160H0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1120 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M960 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M800 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M640 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M480 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M320 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M160 1280V0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 0L0 1280" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M1280 1280L0 0" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M640 1152.5C923.046 1152.5 1152.5 923.046 1152.5 640C1152.5 356.954 923.046 127.5 640 127.5C356.954 127.5 127.5 356.954 127.5 640C127.5 923.046 356.954 1152.5 640 1152.5Z" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M640 960C816.731 960 960 816.731 960 640C960 463.269 816.731 320 640 320C463.269 320 320 463.269 320 640C320 816.731 463.269 960 640 960Z" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+<path d="M640 767.5C710.416 767.5 767.5 710.416 767.5 640C767.5 569.584 710.416 512.5 640 512.5C569.584 512.5 512.5 569.584 512.5 640C512.5 710.416 569.584 767.5 640 767.5Z" stroke="white" stroke-width="1.875" stroke-miterlimit="10"/>
+</svg>
