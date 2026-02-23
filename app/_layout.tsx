@@ -92,6 +92,11 @@ function AppContent() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="+not-found" />
           </Stack.Protected>
+
+          <Stack.Screen
+            name="(paywall)"
+            options={{ presentation: "modal", gestureEnabled: true }}
+          />
         </Stack>
         <StatusBar
           style={colorScheme === "dark" ? "light" : "dark"}

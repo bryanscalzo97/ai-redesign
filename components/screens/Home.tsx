@@ -1,8 +1,8 @@
-import { Text } from "@/components/ui/Text";
-import { useAccentColor } from "@/hooks/useAccentColor";
-import { usePlatform } from "@/hooks/usePlatform";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Text } from '@/components/ui/Text';
+import { useAccentColor } from '@/hooks/useAccentColor';
+import { usePlatform } from '@/hooks/usePlatform';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function Home() {
   const { getBackgroundColor } = useAccentColor();
@@ -11,7 +11,7 @@ export function Home() {
   const { top } = useSafeAreaInsets();
   return (
     <ScrollView
-      contentInsetAdjustmentBehavior="always"
+      contentInsetAdjustmentBehavior='always'
       style={[styles.container, { backgroundColor }]}
     >
       <View
@@ -19,16 +19,13 @@ export function Home() {
       >
         <View style={[styles.content, { marginTop: isAndroid ? top : 0 }]}>
           <Text
-            type="default"
-            weight="normal"
+            type='default'
+            weight='normal'
             style={{
               opacity: 0.6,
             }}
           >
             This is the home screen
-          </Text>
-          <Text type="default" weight="normal">
-            This is the Code with Beto Component
           </Text>
         </View>
       </View>
@@ -38,20 +35,20 @@ export function Home() {
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    position: "relative",
+    width: '100%',
+    position: 'relative',
   },
   contentContainer: {
     flex: 1,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
     paddingHorizontal: 16,
   },
   content: {
-    width: "100%",
-    alignItems: "flex-start",
-    position: "relative",
+    width: '100%',
+    alignItems: 'flex-start',
+    position: 'relative',
   },
 });

@@ -1,8 +1,8 @@
 import { Text } from "@/components/ui/Text";
-import { About } from "@/components/screens/about";
 import { Stack, useRouter } from "expo-router";
+import { View } from "react-native";
 
-export default function AboutScreen() {
+export default function ProfileScreen() {
   const router = useRouter();
 
   return (
@@ -10,17 +10,11 @@ export default function AboutScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            About
+            Perfil
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button
-          icon="house.fill"
-          onPress={() => router.push("/(tabs)/home")}
-        >
-          Home
-        </Stack.Toolbar.Button>
         <Stack.Toolbar.Button
           icon="creditcard"
           onPress={() => router.push("/(paywall)")}
@@ -28,7 +22,11 @@ export default function AboutScreen() {
           Paywall
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
-      <About />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text type="body" weight="normal" lightColor="black" darkColor="white">
+          Profile placeholder.
+        </Text>
+      </View>
     </>
   );
 }

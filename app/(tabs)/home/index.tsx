@@ -10,16 +10,16 @@ export default function HomeScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            Starter Kit
+            Home
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          icon="gearshape"
-          onPress={() => router.push("/(tabs)/about")}
+          icon="person.fill"
+          onPress={() => router.push("/(tabs)/profile")}
         >
-          Settings
+          Perfil
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <Home />
