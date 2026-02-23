@@ -112,7 +112,7 @@ export const LazyImage = React.memo<LazyImageProps>(
         if (isMounted.current) {
           setState((prev) => ({ ...prev, ImageComponent: ExpoImage }));
         }
-      } catch (error) {
+      } catch {
         console.warn(
           "Expo Image not available, falling back to React Native Image"
         );

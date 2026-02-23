@@ -10,7 +10,6 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@code-with-beto/ui": "^0.0.1",
     "@expo-google-fonts/bodoni-moda": "^0.4.1",
     "@expo-google-fonts/oswald": "^0.4.1",
     "@expo/ui": "~55.0.0-preview.4",

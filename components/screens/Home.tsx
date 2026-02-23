@@ -1,7 +1,6 @@
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { usePlatform } from "@/hooks/usePlatform";
-import { Text as TextComponent } from "@code-with-beto/ui";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -28,7 +27,9 @@ export function Home() {
           >
             This is the home screen
           </Text>
-          <TextComponent>This is the Code with Beto Component </TextComponent>
+          <Text type="default" weight="normal">
+            This is the Code with Beto Component
+          </Text>
         </View>
       </View>
     </ScrollView>

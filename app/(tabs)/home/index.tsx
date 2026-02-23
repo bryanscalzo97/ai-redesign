@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/Text";
-import { Home } from "@/components/screens/home";
+import { Home } from "@/components/screens/Home";
 import { Stack, useRouter } from "expo-router";
 
 export default function HomeScreen() {
