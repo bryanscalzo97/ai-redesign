@@ -147,7 +147,7 @@ function parseGeminiError(
 }
 
 export function handleGeminiResponse(
-  response: Response,
+  response: { ok: boolean; status: number },
   data: any,
   attempt: number = 0
 ): GeminiImageResult {

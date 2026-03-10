@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { saveBase64ToAlbum } from "@/lib/save-to-library";
+import { shareBase64Image } from "@/lib/share-image";
 import { Image } from "expo-image";
-import { ActivityIndicator, ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useState } from "react";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlatform } from "@/hooks/usePlatform";
 
@@ -26,6 +29,37 @@ export function RedesignResult({
   const backgroundColor = getBackgroundColor();
   const { isAndroid } = usePlatform();
   const { top } = useSafeAreaInsets();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = useCallback(async () => {
+    if (!generatedImage) return;
+    setIsSaving(true);
+    try {
+      await saveBase64ToAlbum(generatedImage, "png");
+      Alert.alert("Saved", "Image saved to your photo library.");
+    } catch (err) {
+      Alert.alert(
+        "Save failed",
+        err instanceof Error ? err.message : "Could not save the image."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }, [generatedImage]);
+
+  const handleShare = useCallback(async () => {
+    if (!generatedImage) return;
+    try {
+      await shareBase64Image(generatedImage, "png");
+    } catch (err) {
+      // User cancelled share sheet — not an error
+      if (err instanceof Error && err.message.includes("cancel")) return;
+      Alert.alert(
+        "Share failed",
+        err instanceof Error ? err.message : "Could not share the image."
+      );
+    }
+  }, [generatedImage]);
 
   if (isGenerating) {
     return (
@@ -119,15 +153,33 @@ export function RedesignResult({
         transition={300}
       />
 
-      <View style={styles.buttonGroup}>
+      <View style={styles.actionRow}>
         <Button
-          title="Generate Another"
-          onPress={onGenerateAnother}
-          variant="solid"
+          title={isSaving ? "Saving..." : "Save"}
+          onPress={handleSave}
+          disabled={isSaving}
+          variant="outline"
           size="lg"
-          symbol="wand.and.stars"
+          symbol="square.and.arrow.down"
+          style={styles.actionButton}
+        />
+        <Button
+          title="Share"
+          onPress={handleShare}
+          variant="outline"
+          size="lg"
+          symbol="square.and.arrow.up"
+          style={styles.actionButton}
         />
       </View>
+
+      <Button
+        title="Generate Another"
+        onPress={onGenerateAnother}
+        variant="solid"
+        size="lg"
+        symbol="wand.and.stars"
+      />
     </ScrollView>
   );
 }
@@ -152,9 +204,18 @@ const styles = StyleSheet.create({
   },
   resultImage: {
     width: "100%",
-    aspectRatio: 4 / 3,
+    aspectRatio: 1,
     borderRadius: BORDER_RADIUS.MD,
     overflow: "hidden",
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: SPACING.SM,
+    marginTop: SPACING.LG,
+    marginBottom: SPACING.SM,
+  },
+  actionButton: {
+    flex: 1,
   },
   loadingText: {
     marginTop: SPACING.MD,

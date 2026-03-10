@@ -1,5 +1,6 @@
 import { DURATION } from "@/constants/designTokens";
 import { AuthContext, AuthProvider } from "@/context/AuthContext";
+import { RedesignCreationProvider } from "@/context/RedesignCreationContext";
 import { AccentColorProvider, useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useLazyFonts } from "@/hooks/useLazyFonts";
@@ -112,7 +113,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <AccentColorProvider>
-          <AppContent />
+          <RedesignCreationProvider>
+            <AppContent />
+          </RedesignCreationProvider>
         </AccentColorProvider>
       </AuthProvider>
     </GestureHandlerRootView>
