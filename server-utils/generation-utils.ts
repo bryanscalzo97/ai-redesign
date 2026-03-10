@@ -1,4 +1,46 @@
+import https from "node:https";
 import { slog } from "./log";
+
+// ============================================================================
+// Native HTTPS request (bypasses fetch-nodeshim's 5s hardcoded timeout)
+// ============================================================================
+
+function httpsPost(
+  url: string,
+  headers: Record<string, string>,
+  body: string
+): Promise<{ ok: boolean; status: number; statusText: string; json: () => Promise<any> }> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const req = https.request(
+      {
+        hostname: parsed.hostname,
+        path: parsed.pathname + parsed.search,
+        method: "POST",
+        headers: { ...headers, "Content-Length": Buffer.byteLength(body).toString() },
+        timeout: 600_000, // 10 min
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => {
+          const raw = Buffer.concat(chunks).toString("utf-8");
+          resolve({
+            ok: res.statusCode! >= 200 && res.statusCode! < 300,
+            status: res.statusCode!,
+            statusText: res.statusMessage || "",
+            json: () => Promise.resolve(JSON.parse(raw)),
+          });
+        });
+        res.on("error", reject);
+      }
+    );
+    req.on("timeout", () => req.destroy(new Error("Request timed out (10 min)")));
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
 
 // ============================================================================
 // Gemini API Types
@@ -209,8 +251,13 @@ export function handleGeminiResponse(
         p.inlineData ? "inlineData" : p.text ? "text" : "unknown"
       ),
     }));
+    const textContent = parts
+      ?.filter((p: any) => p.text)
+      .map((p: any) => p.text)
+      .join(" ");
     slog("generation-utils", "No image data in Gemini response", {
       candidatesLog,
+      textContent,
       usageMetadata: data?.usageMetadata,
     });
     return {
@@ -237,11 +284,11 @@ export function handleGeminiResponse(
 // Fetch with Retry
 // ============================================================================
 
-const DEFAULT_MAX_RETRIES = 1;
+const DEFAULT_MAX_RETRIES = 2;
 
 export async function fetchGeminiWithRetry(
   url: string,
-  options: RequestInit,
+  options: { method?: string; headers?: Record<string, string>; body?: string },
   maxRetries: number = DEFAULT_MAX_RETRIES
 ): Promise<GeminiImageResult> {
   let lastError: GeminiError | null = null;
@@ -254,13 +301,11 @@ export async function fetchGeminiWithRetry(
         maxRetries,
       });
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120_000); // 2 min timeout
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+      const response = await httpsPost(
+        url,
+        options.headers || {},
+        options.body || ""
+      );
 
       let data: any;
       try {
@@ -314,6 +359,8 @@ export async function fetchGeminiWithRetry(
           networkError instanceof Error
             ? networkError.message
             : String(networkError),
+        errorName: networkError instanceof Error ? networkError.name : "unknown",
+        errorStack: networkError instanceof Error ? networkError.stack?.split("\n").slice(0, 3).join(" | ") : undefined,
         attempt,
       });
 

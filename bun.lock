@@ -25,6 +25,7 @@
         "expo-glass-effect": "~55.0.4",
         "expo-haptics": "~55.0.4",
         "expo-image": "~55.0.3",
+        "expo-image-manipulator": "~55.0.9",
         "expo-image-picker": "^55.0.9",
         "expo-linear-gradient": "~55.0.4",
         "expo-linking": "~55.0.3",
@@ -942,6 +943,8 @@
     "expo-image": ["expo-image@55.0.3", "", { "dependencies": { "sf-symbols-typescript": "^2.2.0" }, "peerDependencies": { "expo": "*", "react": "*", "react-native": "*", "react-native-web": "*" }, "optionalPeers": ["react-native-web"] }, "sha512-u/Mz/5lrzx+Qoo5yklJkPgMSXTEwB5oorhutucE8KSVBaKZMTdU7Tlmiw+hkiA2FSIADT4h2wA2wn6H43vdHxA=="],
 
     "expo-image-loader": ["expo-image-loader@55.0.0", "", { "peerDependencies": { "expo": "*" } }, "sha512-NOjp56wDrfuA5aiNAybBIjqIn1IxKeGJ8CECWZncQ/GzjZfyTYAHTCyeApYkdKkMBLHINzI4BbTGSlbCa0fXXQ=="],
+
+    "expo-image-manipulator": ["expo-image-manipulator@55.0.9", "", { "dependencies": { "expo-image-loader": "~55.0.0" }, "peerDependencies": { "expo": "*" } }, "sha512-hEponYwRHwYlmYn2KTVr57U6i7dJ4NI6gYUT6LwxxLFspiev+ntlXL0e6M7qT0VIHMkLPtBcvP/z3+vaJCNgeQ=="],
 
     "expo-image-picker": ["expo-image-picker@55.0.9", "", { "dependencies": { "expo-image-loader": "~55.0.0" }, "peerDependencies": { "expo": "*" } }, "sha512-e82tLpbg5U2qFdtDQLIcISMNhIr+a4Nt/ZfM+nC6X7qaGjzeYAuzvcb3xUe80Ix1H3D64b/tiA6a7KjQ48cfFA=="],
 

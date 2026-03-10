@@ -1,6 +1,6 @@
-export const GEMINI_MODEL = "gemini-3-pro-image-preview";
+export const GEMINI_MODEL = "gemini-3.1-flash-image-preview";
 
 export const constants = {
-  GEMINI_IMAGE_BASE_URL: `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+  GEMINI_IMAGE_BASE_URL: `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY || ""}`,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || "",
 };

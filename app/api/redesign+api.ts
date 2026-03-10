@@ -32,7 +32,8 @@ export async function POST(request: Request) {
 
     const { image_base64, roomType, style, customPrompt } = parsed.data;
 
-    slog("redesign+api", "Redesign request received", { roomType, style });
+    const imageSizeKB = Math.round(image_base64.length * 0.75 / 1024);
+    slog("redesign+api", "Redesign request received", { roomType, style, imageSizeKB });
 
     // Build the prompt
     const prompt = buildRedesignPrompt(roomType, style, customPrompt);
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
         },
       ],
       generationConfig: {
+        responseModalities: ["IMAGE", "TEXT"],
         imageConfig: {
           aspectRatio: "1:1",
           imageSize: "1K",
@@ -62,7 +64,6 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": constants.GEMINI_API_KEY,
       },
       body: JSON.stringify(geminiBody),
     });

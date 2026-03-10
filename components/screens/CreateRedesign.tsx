@@ -22,6 +22,7 @@ import {
   ScrollView,
   View,
 } from "react-native";
+import * as ImageManipulator from "expo-image-manipulator";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { createRedesignStyles as styles } from "./CreateRedesign.styles";
 
@@ -47,6 +48,15 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
 
+  const resizeAndCompress = useCallback(async (uri: string): Promise<string | null> => {
+    const manipulated = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 1024 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+    );
+    return manipulated.base64 ?? null;
+  }, []);
+
   const pickImageFromGallery = useCallback(async () => {
     const { status } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -64,13 +74,13 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
-      base64: true,
     });
 
-    if (!result.canceled && result.assets[0]?.base64) {
-      setImageBase64(result.assets[0].base64);
+    if (!result.canceled && result.assets[0]?.uri) {
+      const base64 = await resizeAndCompress(result.assets[0].uri);
+      if (base64) setImageBase64(base64);
     }
-  }, []);
+  }, [resizeAndCompress]);
 
   const takePhoto = useCallback(async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -87,13 +97,13 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
-      base64: true,
     });
 
-    if (!result.canceled && result.assets[0]?.base64) {
-      setImageBase64(result.assets[0].base64);
+    if (!result.canceled && result.assets[0]?.uri) {
+      const base64 = await resizeAndCompress(result.assets[0].uri);
+      if (base64) setImageBase64(base64);
     }
-  }, []);
+  }, [resizeAndCompress]);
 
   const handleImagePress = useCallback(() => {
     Alert.alert("Add photo", "Choose a source", [

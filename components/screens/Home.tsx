@@ -1,14 +1,20 @@
-import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { useCallback, useRef, useState } from "react";
 import { CreateRedesign } from "./CreateRedesign";
+import { RedesignResult } from "./RedesignResult";
 import type { RedesignCreationInput } from "@/types/redesign";
 
+type Screen = "create" | "generating" | "result" | "error";
+
 export function Home() {
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [screen, setScreen] = useState<Screen>("create");
+  const [generatedImage, setGeneratedImage] = useState("");
+  const [error, setError] = useState("");
+  const lastInputRef = useRef<RedesignCreationInput | null>(null);
 
   const handleGenerate = useCallback(async (input: RedesignCreationInput) => {
-    if (isGenerating) return;
-    setIsGenerating(true);
+    lastInputRef.current = input;
+    setScreen("generating");
+    setError("");
 
     try {
       const response = await fetch("/api/redesign", {
@@ -25,20 +31,42 @@ export function Home() {
       const data = await response.json();
 
       if (!data.success) {
-        Alert.alert("Error", data.error || "Something went wrong");
+        setError(data.error || "Something went wrong");
+        setScreen("error");
         return;
       }
 
-      // TODO: Navigate to result screen or show generated image
-      console.log("Generation successful, imageData length:", data.imageData.length);
-      Alert.alert("Success", "Room redesigned successfully!");
-    } catch (error) {
-      console.error("Generation error:", error);
-      Alert.alert("Error", "Failed to connect to the server");
-    } finally {
-      setIsGenerating(false);
+      setGeneratedImage(data.imageData);
+      setScreen("result");
+    } catch (err) {
+      setError("Failed to connect to the server");
+      setScreen("error");
     }
-  }, [isGenerating]);
+  }, []);
 
-  return <CreateRedesign onGenerate={handleGenerate} />;
+  const handleGenerateAnother = useCallback(() => {
+    setGeneratedImage("");
+    setError("");
+    setScreen("create");
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    if (lastInputRef.current) {
+      handleGenerate(lastInputRef.current);
+    }
+  }, [handleGenerate]);
+
+  if (screen === "create") {
+    return <CreateRedesign onGenerate={handleGenerate} />;
+  }
+
+  return (
+    <RedesignResult
+      generatedImage={generatedImage}
+      isGenerating={screen === "generating"}
+      error={screen === "error" ? error : undefined}
+      onGenerateAnother={handleGenerateAnother}
+      onRetry={handleRetry}
+    />
+  );
 }
