@@ -12,6 +12,13 @@ export default function RedesignsLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="details"
+        options={{
+          title: "Redesign",
+          headerLargeTitle: false,
+        }}
+      />
     </Stack>
   );
 }

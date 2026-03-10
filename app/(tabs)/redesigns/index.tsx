@@ -1,6 +1,6 @@
+import { RedesignHistory } from "@/components/screens/RedesignHistory";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "expo-router";
-import { View } from "react-native";
 
 export default function RedesignsScreen() {
   return (
@@ -12,11 +12,7 @@ export default function RedesignsScreen() {
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text type="body" weight="normal" lightColor="black" darkColor="white">
-          Your redesigns will appear here.
-        </Text>
-      </View>
+      <RedesignHistory />
     </>
   );
 }
