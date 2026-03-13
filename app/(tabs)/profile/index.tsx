@@ -10,7 +10,7 @@ export default function ProfileScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            Perfil
+            Profile
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>

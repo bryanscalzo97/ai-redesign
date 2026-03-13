@@ -8,7 +8,7 @@ export default function RedesignsScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            Rediseños
+            Redesigns
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>

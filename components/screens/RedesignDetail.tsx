@@ -13,12 +13,14 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function RedesignDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
+  const insets = useSafeAreaInsets();
 
   const [asset, setAsset] = useState<MediaLibrary.Asset | null>(null);
   const [assetInfo, setAssetInfo] = useState<MediaLibrary.AssetInfo | null>(
@@ -125,7 +127,7 @@ export function RedesignDetail() {
   const createdAt = new Date(assetInfo.creationTime * 1000);
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor, paddingBottom: insets.bottom + 80 }]}>
       <Image
         source={{ uri: assetInfo.localUri || assetInfo.uri }}
         style={styles.image}

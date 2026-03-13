@@ -296,7 +296,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
       </View>
 
       <Button
-        title="Generar"
+        title="Generate"
         onPress={handleGenerate}
         disabled={!canGenerate}
         variant="solid"

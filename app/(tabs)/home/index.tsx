@@ -19,7 +19,7 @@ export default function HomeScreen() {
           icon="person.fill"
           onPress={() => router.push("/(tabs)/profile")}
         >
-          Perfil
+          Profile
         </Stack.Toolbar.Button>
       </Stack.Toolbar>
       <Home />
