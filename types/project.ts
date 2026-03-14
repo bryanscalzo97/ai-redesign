@@ -17,4 +17,6 @@ export interface Project {
   updatedAt: string;
   coverImagePath?: string;
   redesigns: RedesignEntry[];
+  region?: import("./seasonal").PropertyRegion;
+  hemisphere?: import("./seasonal").Hemisphere;
 }

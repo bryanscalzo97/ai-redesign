@@ -4,10 +4,12 @@ import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";
+import { getSeasonalRecommendation } from "@/lib/seasonal-engine";
 import type { Project } from "@/types/project";
+import type { Urgency } from "@/types/seasonal";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -23,6 +25,12 @@ const screenWidth = Dimensions.get("window").width;
 const CARD_WIDTH = screenWidth - SPACING.MD * 2;
 const CARD_IMAGE_HEIGHT = 160;
 
+const URGENCY_COLORS: Record<Urgency, string> = {
+  fresh: "#16A34A",
+  due: "#CA8A04",
+  overdue: "#DC2626",
+};
+
 function ProjectCard({
   project,
   onPress,
@@ -34,6 +42,16 @@ function ProjectCard({
 }) {
   const count = project.redesigns.length;
   const date = new Date(project.updatedAt).toLocaleDateString();
+
+  const urgency = useMemo<Urgency | null>(() => {
+    if (!project.region || !project.hemisphere) return null;
+    return getSeasonalRecommendation(
+      project.region,
+      project.hemisphere,
+      new Date(),
+      project.updatedAt
+    ).urgency;
+  }, [project.region, project.hemisphere, project.updatedAt]);
 
   return (
     <Pressable
@@ -58,15 +76,21 @@ function ProjectCard({
         </View>
       )}
       <View style={s.cardInfo}>
-        <Text
-          type="body"
-          weight="bold"
-          lightColor="black"
-          darkColor="white"
-          numberOfLines={1}
-        >
-          {project.name}
-        </Text>
+        <View style={s.cardNameRow}>
+          <Text
+            type="body"
+            weight="bold"
+            lightColor="black"
+            darkColor="white"
+            numberOfLines={1}
+            style={{ flex: 1 }}
+          >
+            {project.name}
+          </Text>
+          {urgency && (
+            <View style={[s.urgencyDot, { backgroundColor: URGENCY_COLORS[urgency] }]} />
+          )}
+        </View>
         <Text
           type="sm"
           lightColor="black"
@@ -228,6 +252,16 @@ const s = StyleSheet.create({
   cardInfo: {
     padding: SPACING.MD,
     gap: 2,
+  },
+  cardNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.SM,
+  },
+  urgencyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   empty: {
     flex: 1,

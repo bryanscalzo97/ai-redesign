@@ -1,9 +1,11 @@
+import { SeasonalBanner } from "@/components/SeasonalBanner";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthContext } from "@/context/AuthContext";
+import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { ALBUM_NAME } from "@/lib/save-to-library";
 import {
@@ -107,6 +109,7 @@ export function Home() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const { isAuthenticated } = use(AuthContext);
+  const { projects } = useProjects();
   const { saveCount } = useRedesignCreation();
 
   const [recentAssets, setRecentAssets] = useState<MediaLibrary.Asset[]>([]);
@@ -147,6 +150,9 @@ export function Home() {
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
 
+  const seasonalProjects = projects.filter((p) => p.region && p.hemisphere);
+  const hasProjectsWithoutMeta = projects.length > 0 && seasonalProjects.length === 0;
+
   return (
     <ScrollView
       style={[s.container, { backgroundColor }]}
@@ -168,6 +174,34 @@ export function Home() {
           Scan your space and optimize it for more bookings
         </Text>
       </Pressable>
+
+      {/* Seasonal Recommendations */}
+      {seasonalProjects.length > 0 && (
+        <View style={s.section}>
+          <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
+            Seasonal Recommendations
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.carousel}
+          >
+            {seasonalProjects.map((p) => (
+              <SeasonalBanner key={p.id} project={p} isDark={isDark} />
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      {hasProjectsWithoutMeta && (
+        <Pressable
+          onPress={() => router.push("/(tabs)/redesigns")}
+          style={[s.seasonalPrompt, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)" }]}
+        >
+          <Text type="sm" style={{ color: textColor, opacity: 0.6, textAlign: "center" }}>
+            Add location details to your properties for seasonal tips
+          </Text>
+        </Pressable>
+      )}
 
       {/* Recent Redesigns */}
       {recentAssets.length > 0 && (
@@ -335,5 +369,12 @@ const s = StyleSheet.create({
     width: RECENT_SIZE,
     height: RECENT_SIZE,
     borderRadius: BORDER_RADIUS.MD,
+  },
+  seasonalPrompt: {
+    marginHorizontal: SPACING.MD,
+    marginTop: 28,
+    borderRadius: BORDER_RADIUS.LG,
+    paddingVertical: SPACING.MD,
+    paddingHorizontal: SPACING.MD,
   },
 });

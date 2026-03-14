@@ -13,7 +13,10 @@ export interface ProjectContextValue {
   projects: Project[];
   isLoading: boolean;
   refreshProjects: () => Promise<void>;
-  createProject: (name: string) => Promise<Project>;
+  createProject: (
+    name: string,
+    meta?: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+  ) => Promise<Project>;
   deleteProject: (id: string) => Promise<void>;
   addRedesignToProject: (
     projectId: string,
@@ -33,6 +36,10 @@ export interface ProjectContextValue {
     text: string
   ) => Promise<void>;
   deleteRedesign: (projectId: string, redesignId: string) => Promise<void>;
+  updateProjectMeta: (
+    projectId: string,
+    meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+  ) => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContextValue>({
@@ -44,6 +51,7 @@ export const ProjectContext = createContext<ProjectContextValue>({
   addRedesignToProject: async () => ({} as RedesignEntry),
   updateRedesignListingText: async () => {},
   deleteRedesign: async () => {},
+  updateProjectMeta: async () => {},
 });
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
@@ -60,8 +68,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   }, [refreshProjects]);
 
   const createProject = useCallback(
-    async (name: string) => {
-      const project = await ProjectStorage.createProject(name);
+    async (
+      name: string,
+      meta?: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+    ) => {
+      const project = await ProjectStorage.createProject(name, meta);
       await refreshProjects();
       return project;
     },
@@ -116,6 +127,17 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [refreshProjects]
   );
 
+  const updateProjectMeta = useCallback(
+    async (
+      projectId: string,
+      meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+    ) => {
+      await ProjectStorage.updateProjectMeta(projectId, meta);
+      await refreshProjects();
+    },
+    [refreshProjects]
+  );
+
   return (
     <ProjectContext.Provider
       value={{
@@ -127,6 +149,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         addRedesignToProject,
         updateRedesignListingText,
         deleteRedesign,
+        updateProjectMeta,
       }}
     >
       {children}

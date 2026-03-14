@@ -21,7 +21,7 @@ import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -71,6 +71,11 @@ function LoadingMessages() {
 
 export function CameraCapture() {
   const router = useRouter();
+  const params = useLocalSearchParams<{
+    prefillStyle?: string;
+    prefillGuest?: string;
+    prefillRoom?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const { generate, isGenerating, generatedImage, error, reset } = useRedesignCreation();
@@ -83,9 +88,15 @@ export function CameraCapture() {
   const [step, setStep] = useState<CameraStep>("camera");
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [roomType, setRoomType] = useState<RoomType | null>(null);
-  const [style, setStyle] = useState<RedesignStyle | null>(null);
-  const [guestType, setGuestType] = useState<GuestType | null>(null);
+  const [roomType, setRoomType] = useState<RoomType | null>(
+    (params.prefillRoom as RoomType) || null
+  );
+  const [style, setStyle] = useState<RedesignStyle | null>(
+    (params.prefillStyle as RedesignStyle) || null
+  );
+  const [guestType, setGuestType] = useState<GuestType | null>(
+    (params.prefillGuest as GuestType) || null
+  );
   const [customInstructions, setCustomInstructions] = useState("");
 
   // Result state

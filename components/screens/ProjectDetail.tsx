@@ -1,15 +1,19 @@
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { RegionPicker } from "@/components/RegionPicker";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { REGION_LABELS } from "@/constants/seasonal-tips";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";
-import { REDESIGN_STYLE_LABELS, ROOM_TYPE_LABELS } from "@/types/redesign";
+import { getSeasonalRecommendation } from "@/lib/seasonal-engine";
+import { REDESIGN_STYLE_LABELS, ROOM_TYPE_LABELS, GUEST_TYPE_LABELS } from "@/types/redesign";
 import type { Project, RedesignEntry } from "@/types/project";
+import type { PropertyRegion, Hemisphere, Urgency } from "@/types/seasonal";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -195,10 +199,44 @@ export function ProjectDetail() {
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const { projects, deleteProject } = useProjects();
+  const { projects, deleteProject, updateProjectMeta } = useProjects();
   const [selectedEntry, setSelectedEntry] = useState<RedesignEntry | null>(null);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [pickerRegion, setPickerRegion] = useState<PropertyRegion | undefined>(undefined);
+  const [pickerHemisphere, setPickerHemisphere] = useState<Hemisphere>("northern");
 
   const project = projects.find((p) => p.id === id);
+
+  const recommendation = useMemo(() => {
+    if (!project?.region || !project?.hemisphere) return null;
+    return getSeasonalRecommendation(
+      project.region,
+      project.hemisphere,
+      new Date(),
+      project.updatedAt
+    );
+  }, [project?.region, project?.hemisphere, project?.updatedAt]);
+
+  const handleSaveMeta = useCallback(async () => {
+    if (!project || !pickerRegion) return;
+    await updateProjectMeta(project.id, {
+      region: pickerRegion,
+      hemisphere: pickerHemisphere,
+    });
+    setEditingMeta(false);
+  }, [project, pickerRegion, pickerHemisphere, updateProjectMeta]);
+
+  const handleRefreshSeasonal = useCallback(() => {
+    if (!recommendation) return;
+    router.push({
+      pathname: "/(tabs)/camera",
+      params: {
+        prefillStyle: recommendation.styles[0],
+        prefillGuest: recommendation.guestType,
+        prefillRoom: recommendation.rooms[0],
+      },
+    });
+  }, [recommendation, router]);
 
   const handleDelete = useCallback(() => {
     if (!project) return;
@@ -260,6 +298,89 @@ export function ProjectDetail() {
         radius="full"
         style={s.addButton as any}
       />
+
+      {/* Seasonal section */}
+      {!project.region || editingMeta ? (
+        <View style={[s.seasonalCard, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" }]}>
+          <Text type="body" weight="bold" lightColor="black" darkColor="white">
+            {editingMeta ? "Edit Location" : "Add Location for Seasonal Tips"}
+          </Text>
+          <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+            Get personalized recommendations based on your property location and season.
+          </Text>
+          <RegionPicker
+            region={pickerRegion ?? project.region}
+            hemisphere={pickerHemisphere}
+            onRegionChange={setPickerRegion}
+            onHemisphereChange={setPickerHemisphere}
+            isDark={isDark}
+          />
+          <View style={s.metaActions}>
+            <Button
+              title="Save"
+              onPress={handleSaveMeta}
+              variant="solid"
+              size="md"
+              disabled={!pickerRegion}
+            />
+            {editingMeta && (
+              <Pressable onPress={() => setEditingMeta(false)}>
+                <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+                  Cancel
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
+      ) : recommendation ? (
+        <View style={[s.seasonalCard, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" }]}>
+          <View style={s.seasonalHeader}>
+            <Text type="body" weight="bold" lightColor="black" darkColor="white">
+              {recommendation.seasonLabel}
+            </Text>
+            <Pressable onPress={() => {
+              setPickerRegion(project.region);
+              setPickerHemisphere(project.hemisphere ?? "northern");
+              setEditingMeta(true);
+            }}>
+              <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+                Edit
+              </Text>
+            </Pressable>
+          </View>
+          <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+            {REGION_LABELS[project.region!]} · Updated {new Date(project.updatedAt).toLocaleDateString()}
+          </Text>
+          <View style={s.seasonalTags}>
+            <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
+              <Text type="caption" lightColor="black" darkColor="white">
+                {REDESIGN_STYLE_LABELS[recommendation.styles[0]]}
+              </Text>
+            </View>
+            <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
+              <Text type="caption" lightColor="black" darkColor="white">
+                {GUEST_TYPE_LABELS[recommendation.guestType]}
+              </Text>
+            </View>
+          </View>
+          <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.7, lineHeight: 18 }}>
+            {recommendation.tip}
+          </Text>
+          <View style={s.urgencyRow}>
+            <View style={[s.urgencyDot, { backgroundColor: recommendation.urgency === "fresh" ? "#16A34A" : recommendation.urgency === "due" ? "#CA8A04" : "#DC2626" }]} />
+            <Text type="caption" style={{ color: recommendation.urgency === "fresh" ? "#16A34A" : recommendation.urgency === "due" ? "#CA8A04" : "#DC2626", flex: 1 }}>
+              {recommendation.urgencyMessage}
+            </Text>
+          </View>
+          <Button
+            title={`Refresh for ${recommendation.seasonLabel}`}
+            onPress={handleRefreshSeasonal}
+            variant="solid"
+            size="md"
+            symbol="camera.viewfinder"
+          />
+        </View>
+      ) : null}
 
       {project.redesigns.length === 0 ? (
         <View style={s.emptyState}>
@@ -331,6 +452,42 @@ const s = StyleSheet.create({
     marginTop: 32,
     alignItems: "center",
     paddingVertical: SPACING.MD,
+  },
+  seasonalCard: {
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.MD,
+    gap: SPACING.SM,
+    marginTop: SPACING.MD,
+  },
+  seasonalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  seasonalTags: {
+    flexDirection: "row",
+    gap: SPACING.XS,
+  },
+  seasonalTag: {
+    paddingHorizontal: SPACING.SM,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.FULL,
+  },
+  urgencyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.XS,
+  },
+  urgencyDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  metaActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.MD,
+    marginTop: SPACING.XS,
   },
   // Expanded view
   expandedContainer: {

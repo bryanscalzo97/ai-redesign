@@ -68,7 +68,10 @@ export async function getProject(id: string): Promise<Project | null> {
   return raw ? JSON.parse(raw) : null;
 }
 
-export async function createProject(name: string): Promise<Project> {
+export async function createProject(
+  name: string,
+  meta?: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+): Promise<Project> {
   const id = generateId();
   const now = new Date().toISOString();
   const project: Project = {
@@ -77,6 +80,8 @@ export async function createProject(name: string): Promise<Project> {
     createdAt: now,
     updatedAt: now,
     redesigns: [],
+    region: meta?.region,
+    hemisphere: meta?.hemisphere,
   };
 
   const index = await getIndex();
@@ -84,6 +89,19 @@ export async function createProject(name: string): Promise<Project> {
   await AsyncStorage.setItem(projectKey(id), JSON.stringify(project));
   await setIndex(index);
   return project;
+}
+
+export async function updateProjectMeta(
+  projectId: string,
+  meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+): Promise<void> {
+  const project = await getProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  if (meta.region !== undefined) project.region = meta.region;
+  if (meta.hemisphere !== undefined) project.hemisphere = meta.hemisphere;
+  project.updatedAt = new Date().toISOString();
+  await saveProject(project);
 }
 
 export async function saveProject(project: Project): Promise<void> {
