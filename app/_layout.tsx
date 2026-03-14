@@ -41,7 +41,7 @@ function AppContent() {
   const [backgroundColor, setBackgroundColor] = useState<string>(() =>
     getBackgroundColor()
   );
-  const { isAuthenticated } = use(AuthContext);
+  const { isOnboarded } = use(AuthContext);
 
   useEffect(() => {
     const newColor = getBackgroundColor();
@@ -83,13 +83,13 @@ function AppContent() {
             headerShown: false,
           }}
         >
-          <Stack.Protected guard={!isAuthenticated}>
+          <Stack.Protected guard={!isOnboarded}>
             <Stack.Screen
               name="(onboarding)"
               options={{ headerShown: false }}
             />
           </Stack.Protected>
-          <Stack.Protected guard={isAuthenticated}>
+          <Stack.Protected guard={isOnboarded}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="+not-found" />
           </Stack.Protected>
@@ -97,6 +97,17 @@ function AppContent() {
           <Stack.Screen
             name="(paywall)"
             options={{ presentation: "modal", gestureEnabled: true }}
+          />
+          <Stack.Screen
+            name="auth-sheet"
+            options={{
+              presentation: "formSheet",
+              gestureEnabled: true,
+              headerShown: false,
+              sheetGrabberVisible: true,
+              sheetInitialDetentIndex: 0,
+              sheetAllowedDetents: [0.41, 0.61],
+            }}
           />
         </Stack>
         <StatusBar

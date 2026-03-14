@@ -12,12 +12,13 @@ import {
   type RedesignStyle,
   type RoomType,
 } from "@/types/redesign";
+import { AuthContext } from "@/context/AuthContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useRouter } from "expo-router";
-import { useCallback, useRef, useState } from "react";
+import { use, useCallback, useRef, useState } from "react";
 import {
   Alert,
   Linking,
@@ -35,6 +36,7 @@ export function CameraCapture() {
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const { generate } = useRedesignCreation();
+  const { isAuthenticated } = use(AuthContext);
 
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<"front" | "back">("back");
@@ -78,6 +80,11 @@ export function CameraCapture() {
   }, []);
 
   const handleGenerate = useCallback(() => {
+    if (!isAuthenticated) {
+      router.push("/auth-sheet");
+      return;
+    }
+
     if (!imageBase64 || !roomType || !style) return;
 
     const input: RedesignCreationInput = {
@@ -89,7 +96,7 @@ export function CameraCapture() {
 
     generate(input);
     router.replace("/(tabs)/home");
-  }, [imageBase64, roomType, style, customInstructions, generate, router]);
+  }, [isAuthenticated, imageBase64, roomType, style, customInstructions, generate, router]);
 
   const toggleFlash = useCallback(() => {
     setFlash((prev) => (prev === "off" ? "on" : "off"));

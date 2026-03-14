@@ -1,11 +1,12 @@
 import LinearGradientImageBlur from "@/components/LinearGradientImageBlur";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
-import { useRouter } from "expo-router";
+import { AuthContext } from "@/context/AuthContext";
+import { use } from "react";
 import { StyleSheet, View } from "react-native";
 
 export function Onboarding() {
-  const router = useRouter();
+  const { setIsOnboarded } = use(AuthContext);
 
   return (
     <View style={styles.container}>
@@ -32,7 +33,7 @@ export function Onboarding() {
             size="lg"
             style={{ marginTop: 44 } as any}
             onPress={() => {
-              router.push("/(onboarding)/auth");
+              setIsOnboarded(true);
             }}
           />
         </View>
