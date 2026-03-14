@@ -1,4 +1,5 @@
-import { createContext, useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { createContext } from "react";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
@@ -11,10 +12,16 @@ export const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const session = authClient.useSession();
+  const isAuthenticated = !!session.data?.user;
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        setIsAuthenticated: () => {},
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
