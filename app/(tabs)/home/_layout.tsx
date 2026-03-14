@@ -12,6 +12,13 @@ export default function HomeLayout() {
           headerTransparent: true,
         }}
       />
+      <Stack.Screen
+        name="style-detail"
+        options={{
+          headerBackButtonDisplayMode: "minimal",
+          headerLargeTitle: false,
+        }}
+      />
     </Stack>
   );
 }
