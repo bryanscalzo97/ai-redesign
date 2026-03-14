@@ -109,6 +109,14 @@ function AppContent() {
               sheetAllowedDetents: [0.41, 0.61],
             }}
           />
+          <Stack.Screen
+            name="privacy-policy"
+            options={{ presentation: "modal", title: "Privacy Policy" }}
+          />
+          <Stack.Screen
+            name="terms-of-service"
+            options={{ presentation: "modal", title: "Terms of Service" }}
+          />
         </Stack>
         <StatusBar
           style={colorScheme === "dark" ? "light" : "dark"}

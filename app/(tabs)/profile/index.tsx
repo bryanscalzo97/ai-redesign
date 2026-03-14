@@ -1,16 +1,113 @@
 import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { AuthContext } from "@/context/AuthContext";
 import { authClient } from "@/lib/auth-client";
+import { useAccentColor } from "@/hooks/useAccentColor";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { Stack, useRouter } from "expo-router";
 import { use } from "react";
-import { Alert, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+function SectionHeader({ title }: { title: string }) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  return (
+    <Text
+      type="sm"
+      weight="semibold"
+      style={{
+        color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+        textTransform: "uppercase",
+        paddingHorizontal: 16,
+        marginBottom: 6,
+      }}
+    >
+      {title}
+    </Text>
+  );
+}
+
+function SectionCard({ children }: { children: React.ReactNode }) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  return (
+    <View
+      style={{
+        backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)",
+        borderRadius: 12,
+        overflow: "hidden",
+      }}
+    >
+      {children}
+    </View>
+  );
+}
+
+function Row({
+  label,
+  value,
+  isLast = false,
+}: {
+  label: string;
+  value: string;
+  isLast?: boolean;
+}) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  return (
+    <View
+      style={[
+        s.row,
+        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: borderColor },
+      ]}
+    >
+      <Text type="default" style={{ color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)" }}>
+        {label}
+      </Text>
+      <Text type="default" weight="medium" lightColor="black" darkColor="white">
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function LinkRow({
+  title,
+  onPress,
+  isLast = false,
+}: {
+  title: string;
+  onPress: () => void;
+  isLast?: boolean;
+}) {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const borderColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        s.linkRow,
+        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: borderColor },
+      ]}
+    >
+      <Text type="default" lightColor="black" darkColor="white">{title}</Text>
+      <Icon symbol="chevron.right" size="xs" color={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"} />
+    </Pressable>
+  );
+}
 
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAuthenticated, user } = use(AuthContext);
+  const { getBackgroundColor } = useAccentColor();
+  const backgroundColor = getBackgroundColor();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const handleSignOut = async () => {
     try {
@@ -27,6 +124,10 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const displayName = user?.name?.includes("@")
+    ? user.name.slice(0, user.name.indexOf("@"))
+    : user?.name || "—";
+
   return (
     <>
       <Stack.Toolbar placement="left">
@@ -37,14 +138,41 @@ export default function ProfileScreen() {
         </Stack.Toolbar.View>
       </Stack.Toolbar>
 
-      <View style={[styles.container, { paddingBottom: insets.bottom }]}>
-        {!isAuthenticated ? (
-          <View style={styles.signInContainer}>
-            <Text type="2xl" weight="bold" style={styles.centered}>
+      <ScrollView
+        style={[s.container, { backgroundColor }]}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentInsetAdjustmentBehavior="always"
+      >
+        {/* Sign In Prompt */}
+        {!isAuthenticated && (
+          <View style={s.signInContainer}>
+            <View style={s.signInIconCircle}>
+              <Icon
+                symbol="person.crop.circle"
+                size="xl"
+                color={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)"}
+              />
+            </View>
+            <Text
+              type="xl"
+              weight="bold"
+              lightColor="black"
+              darkColor="white"
+              style={{ textAlign: "center", marginTop: 16 }}
+            >
               Not signed in
             </Text>
-            <Text type="default" style={[styles.centered, { opacity: 0.5, marginTop: 8 }]}>
-              Sign in to access your account details and personalized features.
+            <Text
+              type="sm"
+              style={{
+                textAlign: "center",
+                marginTop: 6,
+                color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                lineHeight: 20,
+                paddingHorizontal: 16,
+              }}
+            >
+              Sign in to access your account details, subscription info, and personalized features.
             </Text>
             <Button
               title="Sign in"
@@ -52,69 +180,94 @@ export default function ProfileScreen() {
               variant="solid"
               radius="full"
               size="lg"
-              style={{ marginTop: 24 } as any}
+              style={{ marginTop: 20, width: "100%" } as any}
               onPress={() => router.push("/auth-sheet")}
             />
           </View>
-        ) : (
-          <View style={styles.accountContainer}>
-            <View style={styles.section}>
-              <Text type="sm" weight="semibold" style={{ opacity: 0.5, marginBottom: 12 }}>
-                ACCOUNT
-              </Text>
-              <View style={styles.row}>
-                <Text type="default" style={{ opacity: 0.5 }}>Name</Text>
-                <Text type="default" weight="semibold">{user?.name ?? "—"}</Text>
-              </View>
-              <View style={styles.row}>
-                <Text type="default" style={{ opacity: 0.5 }}>Email</Text>
-                <Text type="default" weight="semibold">{user?.email ?? "—"}</Text>
-              </View>
-            </View>
+        )}
 
-            <Button
-              title="Log out"
-              color="red"
-              variant="soft"
-              radius="full"
-              size="lg"
-              style={{ marginTop: 32 } as any}
-              onPress={confirmSignOut}
-            />
+        {/* Account Section */}
+        {isAuthenticated && (
+          <View style={s.section}>
+            <SectionHeader title="Account" />
+            <SectionCard>
+              <Row label="Name" value={displayName} />
+              <Row label="Email" value={user?.email ?? "—"} isLast />
+            </SectionCard>
           </View>
         )}
-      </View>
+
+        {/* Legal Section */}
+        <View style={s.section}>
+          <SectionHeader title="Legal" />
+          <SectionCard>
+            <LinkRow
+              title="Privacy Policy"
+              onPress={() => router.push("/privacy-policy")}
+            />
+            <LinkRow
+              title="Terms of Service"
+              onPress={() => router.push("/terms-of-service")}
+              isLast
+            />
+          </SectionCard>
+        </View>
+
+        {/* Log Out */}
+        {isAuthenticated && (
+          <View style={s.section}>
+            <SectionCard>
+              <Pressable onPress={confirmSignOut} style={s.logoutRow}>
+                <Text type="default" weight="medium" style={{ color: "#ef4444" }}>
+                  Log out
+                </Text>
+              </Pressable>
+            </SectionCard>
+          </View>
+        )}
+      </ScrollView>
     </>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
   },
   signInContainer: {
-    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 40,
+    paddingTop: 48,
+    paddingBottom: 12,
+  },
+  signInIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  centered: {
-    textAlign: "center",
-  },
-  accountContainer: {
-    flex: 1,
-    paddingTop: 24,
   },
   section: {
-    gap: 4,
+    marginTop: 28,
+    paddingHorizontal: 16,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "rgba(128,128,128,0.2)",
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+  },
+  linkRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+  },
+  logoutRow: {
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    alignItems: "center",
   },
 });
