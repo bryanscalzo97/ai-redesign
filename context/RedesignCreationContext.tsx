@@ -13,6 +13,7 @@ export interface RedesignCreationState {
   image?: { uri: string; base64: string };
   roomType: string;
   style: string;
+  guestType: string;
   customPrompt: string;
   currentStep: number;
   generatedImage?: string;
@@ -26,6 +27,7 @@ export interface RedesignCreationActions {
   setImage: (image: { uri: string; base64: string } | undefined) => void;
   setRoomType: (roomType: string) => void;
   setStyle: (style: string) => void;
+  setGuestType: (guestType: string) => void;
   setCustomPrompt: (prompt: string) => void;
   setCurrentStep: (step: number) => void;
   nextStep: () => void;
@@ -48,6 +50,7 @@ const initialState: RedesignCreationState = {
   image: undefined,
   roomType: "",
   style: "",
+  guestType: "",
   customPrompt: "",
   currentStep: 1,
   generatedImage: undefined,
@@ -64,6 +67,7 @@ export const RedesignCreationContext =
     setImage: () => {},
     setRoomType: () => {},
     setStyle: () => {},
+    setGuestType: () => {},
     setCustomPrompt: () => {},
     setCurrentStep: () => {},
     nextStep: () => {},
@@ -96,6 +100,10 @@ export function RedesignCreationProvider({
 
   const setStyle = useCallback((style: string) => {
     setState((prev) => ({ ...prev, style, updatedAt: new Date() }));
+  }, []);
+
+  const setGuestType = useCallback((guestType: string) => {
+    setState((prev) => ({ ...prev, guestType, updatedAt: new Date() }));
   }, []);
 
   const setCustomPrompt = useCallback((customPrompt: string) => {
@@ -145,6 +153,7 @@ export function RedesignCreationProvider({
           roomType: input.roomType,
           style: input.style,
           customPrompt: input.customInstructions,
+          guestType: input.guestType,
         }),
       });
 
@@ -205,6 +214,7 @@ export function RedesignCreationProvider({
     setImage,
     setRoomType,
     setStyle,
+    setGuestType,
     setCustomPrompt,
     setCurrentStep,
     nextStep,

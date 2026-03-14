@@ -1,4 +1,4 @@
-import type { RedesignStyle, RoomType } from "@/types/redesign";
+import type { RedesignStyle, RoomType, GuestType } from "@/types/redesign";
 
 export interface StyleInfo {
   key: RedesignStyle;
@@ -16,35 +16,32 @@ export interface RoomTypeInfo {
   gallery: string[];
 }
 
+export interface GuestTypeInfo {
+  key: GuestType;
+  label: string;
+  description: string;
+  image: string;
+  gallery: string[];
+}
+
 export const STYLE_DATA: StyleInfo[] = [
   {
-    key: "modern",
-    label: "Modern",
+    key: "hotel-boutique",
+    label: "Hotel Boutique",
     description:
-      "Clean lines, open spaces, and a neutral color palette define the modern style. Expect sleek furniture, large windows, and minimal ornamentation that creates a fresh, uncluttered feel.",
-    image: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&q=80",
+      "Give your space the polished feel of a boutique hotel. Crisp linens, curated art, and elegant fixtures that make guests feel they're checking into a high-end stay.",
+    image: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80",
-      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&q=80",
+      "https://images.unsplash.com/photo-1590490360182-c33d955e4c47?w=400&q=80",
+      "https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400&q=80",
     ],
   },
   {
-    key: "minimalist",
-    label: "Minimalist",
+    key: "cozy-retreat",
+    label: "Cozy Retreat",
     description:
-      "Less is more. Minimalist design strips away excess to focus on essential elements. Monochromatic tones, simple forms, and purposeful furniture create a calm, intentional space.",
-    image: "https://images.unsplash.com/photo-1598928506311-c55ez637a58a?w=800&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1598928506311-c55ez637a58a?w=400&q=80",
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
-    ],
-  },
-  {
-    key: "cozy",
-    label: "Cozy",
-    description:
-      "Warm textures, soft lighting, and plush materials make a space feel like a hug. Think layered blankets, warm wood tones, candles, and inviting seating arrangements.",
+      "Warm textures, soft lighting, and layered blankets create an irresistible hideaway. Perfect for listings that promise relaxation and five-star comfort reviews.",
     image: "https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80",
@@ -52,10 +49,32 @@ export const STYLE_DATA: StyleInfo[] = [
     ],
   },
   {
-    key: "scandinavian",
-    label: "Scandinavian",
+    key: "resort-style",
+    label: "Resort Style",
     description:
-      "Inspired by Nordic simplicity. Light woods, white walls, functional furniture, and pops of muted color create bright, airy spaces that balance form and function.",
+      "Bring vacation vibes indoors with tropical accents, natural materials, and airy layouts. Guests will feel like they're at a beachside resort.",
+    image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
+    ],
+  },
+  {
+    key: "urban-lux",
+    label: "Urban Lux",
+    description:
+      "Sleek city living with statement lighting, dark accents, and premium finishes. Ideal for urban listings targeting upscale travelers.",
+    image: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
+    ],
+  },
+  {
+    key: "nordic-airbnb",
+    label: "Nordic Airbnb",
+    description:
+      "Scandinavian simplicity meets Airbnb appeal. Light woods, white walls, and functional furniture that photographs beautifully and delights guests.",
     image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80",
@@ -63,21 +82,10 @@ export const STYLE_DATA: StyleInfo[] = [
     ],
   },
   {
-    key: "industrial",
-    label: "Industrial",
+    key: "instagram-worthy",
+    label: "Instagram-Worthy",
     description:
-      "Raw, unfinished aesthetics meet urban edge. Exposed brick, metal fixtures, concrete floors, and open ductwork give spaces a warehouse-turned-loft character.",
-    image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80",
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
-    ],
-  },
-  {
-    key: "bohemian",
-    label: "Bohemian",
-    description:
-      "Eclectic, colorful, and free-spirited. Bohemian interiors mix patterns, textures, and global influences with plants, macramé, and vintage finds for a lived-in, artistic feel.",
+      "Bold colors, eye-catching accents, and photogenic corners that guests will share on social media — free marketing for your listing.",
     image: "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=400&q=80",
@@ -85,47 +93,47 @@ export const STYLE_DATA: StyleInfo[] = [
     ],
   },
   {
-    key: "midcentury",
-    label: "Mid-Century",
+    key: "business-ready",
+    label: "Business Ready",
     description:
-      "Retro charm from the 1950s-60s. Organic curves, tapered legs, bold accent colors, and iconic furniture pieces like Eames chairs define this timeless style.",
-    image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&q=80",
+      "A professional workspace setup with ergonomic seating, fast-wifi-ready desk, and clean aesthetics. Attract business travelers and digital nomads.",
+    image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=800&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
-      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80",
+      "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
     ],
   },
   {
-    key: "coastal",
-    label: "Coastal",
+    key: "family-friendly",
+    label: "Family Friendly",
     description:
-      "Breezy, beach-inspired living. Light blues, sandy neutrals, natural fibers, and ocean-inspired accents bring the relaxed feel of seaside life into any room.",
-    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80",
-    gallery: [
-      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
-    ],
-  },
-  {
-    key: "traditional",
-    label: "Traditional",
-    description:
-      "Classic elegance with rich wood furniture, ornate details, symmetrical layouts, and warm color palettes. Think crown molding, wingback chairs, and timeless sophistication.",
+      "Safe, welcoming spaces with practical layouts, durable materials, and thoughtful touches that families love — and review highly.",
     image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
-      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80",
     ],
   },
   {
-    key: "luxury",
-    label: "Luxury",
+    key: "budget-refresh",
+    label: "Budget Refresh",
     description:
-      "Opulent materials, statement lighting, and high-end finishes elevate every detail. Marble, velvet, gold accents, and custom furniture create an atmosphere of refined indulgence.",
-    image: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=800&q=80",
+      "Maximum impact with minimal spend. Smart styling, decluttering, and affordable accents that dramatically improve your listing photos.",
+    image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
-      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
+    ],
+  },
+  {
+    key: "rustic-charm",
+    label: "Rustic Charm",
+    description:
+      "Exposed wood, natural stone, and earthy tones create a warm, authentic character. Perfect for cabins, cottages, and countryside listings.",
+    image: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&q=80",
+      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
     ],
   },
 ];
@@ -133,9 +141,9 @@ export const STYLE_DATA: StyleInfo[] = [
 export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
   {
     key: "living",
-    label: "Living Room",
+    label: "Living Area",
     description:
-      "The heart of the home where family and guests gather. Transform your living room with new layouts, furniture arrangements, and color schemes that match your lifestyle.",
+      "The space guests see first in your listing photos. Stage your living area with inviting furniture, great lighting, and a layout that feels spacious and welcoming.",
     image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80",
@@ -144,9 +152,9 @@ export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
   },
   {
     key: "bedroom",
-    label: "Bedroom",
+    label: "Guest Bedroom",
     description:
-      "Your personal sanctuary for rest and relaxation. Reimagine your bedroom with calming colors, cozy textures, and smart storage solutions.",
+      "The room guests care about most. Crisp bedding, ambient lighting, and a hotel-like feel that earns top reviews and repeat bookings.",
     image: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=400&q=80",
@@ -157,7 +165,7 @@ export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
     key: "kitchen",
     label: "Kitchen",
     description:
-      "Where culinary creativity meets design. Modernize your kitchen with new cabinetry, countertops, and layout ideas that make cooking a pleasure.",
+      "A clean, well-equipped kitchen is a top booking factor. Modernize the look with updated surfaces, organized counters, and inviting styling.",
     image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80",
@@ -168,7 +176,7 @@ export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
     key: "bathroom",
     label: "Bathroom",
     description:
-      "Turn your bathroom into a spa-like retreat. Explore tile patterns, vanity styles, and lighting that elevate your daily routine.",
+      "Turn your bathroom into a spa-like experience. Fresh towels, modern fixtures, and clean lines that photograph like a luxury hotel.",
     image: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&q=80",
@@ -179,7 +187,7 @@ export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
     key: "dining",
     label: "Dining Room",
     description:
-      "Set the scene for memorable meals. From formal dining to casual breakfast nooks, find the perfect table, lighting, and ambiance for your space.",
+      "A well-staged dining area suggests memorable meals and gatherings. Show guests an inviting table setting that adds perceived value to your listing.",
     image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=400&q=80",
@@ -187,25 +195,83 @@ export const ROOM_TYPE_DATA: RoomTypeInfo[] = [
     ],
   },
   {
-    key: "office",
-    label: "Office",
+    key: "entryway",
+    label: "Entryway",
     description:
-      "Design a workspace that boosts productivity and creativity. Ergonomic setups, smart storage, and inspiring aesthetics for your home office.",
-    image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=800&q=80",
+      "First impressions matter. A styled entryway with smart storage and warm lighting sets the tone for a great guest experience from the moment they arrive.",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
     gallery: [
-      "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
-      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
+      "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
     ],
   },
   {
     key: "outdoor",
     label: "Outdoor",
     description:
-      "Extend your living space outside. Patios, gardens, decks, and balconies transformed with furniture, greenery, and lighting for year-round enjoyment.",
+      "Outdoor spaces are a huge differentiator. Stage your yard, garden, or deck to showcase the full potential of your property.",
     image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&q=80",
     gallery: [
       "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
       "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
+    ],
+  },
+  {
+    key: "patio",
+    label: "Patio / Balcony",
+    description:
+      "Patios and balconies are guest favorites. Add comfortable seating, plants, and ambient lighting to create an irresistible outdoor living space.",
+    image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
+      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
+    ],
+  },
+];
+
+export const GUEST_TYPE_DATA: GuestTypeInfo[] = [
+  {
+    key: "business",
+    label: "Business",
+    description:
+      "Business travelers value a dedicated workspace, fast Wi-Fi, good lighting, and a quiet environment. They want convenience and professionalism.",
+    image: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
+    ],
+  },
+  {
+    key: "couples",
+    label: "Couples",
+    description:
+      "Couples look for romantic ambiance, cozy bedding, warm lighting, and intimate spaces. Think candles, soft textures, and a relaxing vibe.",
+    image: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&q=80",
+      "https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80",
+    ],
+  },
+  {
+    key: "families",
+    label: "Families",
+    description:
+      "Families need safe, spacious layouts with durable furniture, storage for luggage, and a welcoming atmosphere that works for all ages.",
+    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
+      "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=400&q=80",
+    ],
+  },
+  {
+    key: "digital-nomads",
+    label: "Digital Nomads",
+    description:
+      "Digital nomads want a great desk setup, natural light, comfortable seating for long work sessions, and a space that inspires productivity.",
+    image: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=800&q=80",
+    gallery: [
+      "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
+      "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
     ],
   },
 ];
@@ -216,4 +282,8 @@ export function findStyleByKey(key: string): StyleInfo | undefined {
 
 export function findRoomTypeByKey(key: string): RoomTypeInfo | undefined {
   return ROOM_TYPE_DATA.find((r) => r.key === key);
+}
+
+export function findGuestTypeByKey(key: string): GuestTypeInfo | undefined {
+  return GUEST_TYPE_DATA.find((g) => g.key === key);
 }

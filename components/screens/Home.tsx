@@ -9,8 +9,10 @@ import { ALBUM_NAME } from "@/lib/save-to-library";
 import {
   REDESIGN_STYLE_LABELS,
   ROOM_TYPE_LABELS,
+  GUEST_TYPE_LABELS,
   type RedesignStyle,
   type RoomType,
+  type GuestType,
 } from "@/types/redesign";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
@@ -30,16 +32,16 @@ const CARD_HEIGHT = 220;
 const RECENT_SIZE = 120;
 
 const STYLE_IMAGES: Partial<Record<RedesignStyle, string>> = {
-  modern: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=400&q=80",
-  minimalist: "https://images.unsplash.com/photo-1598928506311-c55ez637a58a?w=400&q=80",
-  cozy: "https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80",
-  scandinavian: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80",
-  industrial: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80",
-  bohemian: "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=400&q=80",
-  midcentury: "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
-  coastal: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
-  traditional: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
-  luxury: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
+  "hotel-boutique": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&q=80",
+  "cozy-retreat": "https://images.unsplash.com/photo-1616046229478-9901c5536a45?w=400&q=80",
+  "resort-style": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80",
+  "urban-lux": "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=400&q=80",
+  "nordic-airbnb": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&q=80",
+  "instagram-worthy": "https://images.unsplash.com/photo-1617325247661-675ab4b64ae2?w=400&q=80",
+  "business-ready": "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
+  "family-friendly": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
+  "budget-refresh": "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
+  "rustic-charm": "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&q=80",
 };
 
 const ROOM_IMAGES: Partial<Record<RoomType, string>> = {
@@ -48,8 +50,16 @@ const ROOM_IMAGES: Partial<Record<RoomType, string>> = {
   kitchen: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&q=80",
   bathroom: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=400&q=80",
   dining: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=400&q=80",
-  office: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
+  entryway: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
   outdoor: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=400&q=80",
+  patio: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=400&q=80",
+};
+
+const GUEST_TYPE_IMAGES: Partial<Record<GuestType, string>> = {
+  business: "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=400&q=80",
+  couples: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&q=80",
+  families: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
+  "digital-nomads": "https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80",
 };
 
 function StyleCard({
@@ -61,7 +71,7 @@ function StyleCard({
   itemKey: string;
   label: string;
   imageUrl: string;
-  type: "style" | "room";
+  type: "style" | "room" | "guest";
 }) {
   return (
     <Link
@@ -135,6 +145,7 @@ export function Home() {
 
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
+  const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
 
   return (
     <ScrollView
@@ -151,10 +162,10 @@ export function Home() {
         style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
       >
         <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-          New Redesign
+          Boost Your Bookings
         </Text>
         <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-          Scan a room and transform it with AI
+          Scan your space and optimize it for more bookings
         </Text>
       </Pressable>
 
@@ -202,7 +213,7 @@ export function Home() {
       {/* Styles */}
       <View style={s.section}>
         <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-          Explore Styles
+          Top Performing Styles
         </Text>
         <ScrollView
           horizontal
@@ -221,10 +232,10 @@ export function Home() {
         </ScrollView>
       </View>
 
-      {/* Room Types */}
+      {/* Spaces */}
       <View style={s.section}>
         <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-          Room Types
+          Spaces
         </Text>
         <ScrollView
           horizontal
@@ -238,6 +249,28 @@ export function Home() {
               label={ROOM_TYPE_LABELS[key]}
               imageUrl={ROOM_IMAGES[key]!}
               type="room"
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* By Guest Type */}
+      <View style={s.section}>
+        <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
+          By Guest Type
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.carousel}
+        >
+          {guestTypes.map((key) => (
+            <StyleCard
+              key={key}
+              itemKey={key}
+              label={GUEST_TYPE_LABELS[key]}
+              imageUrl={GUEST_TYPE_IMAGES[key]!}
+              type="guest"
             />
           ))}
         </ScrollView>

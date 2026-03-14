@@ -8,7 +8,7 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon sf="house.fill" drawable="ic_menu_home" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="camera">
-        <NativeTabs.Trigger.Label>Scan Room</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Scan Space</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="camera.viewfinder" drawable="ic_menu_camera" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="redesigns">

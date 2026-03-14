@@ -4,47 +4,59 @@ export type RoomType =
   | "kitchen"
   | "bathroom"
   | "dining"
-  | "office"
-  | "outdoor";
+  | "entryway"
+  | "outdoor"
+  | "patio";
 
 export type RedesignStyle =
-  | "modern"
-  | "minimalist"
-  | "cozy"
-  | "scandinavian"
-  | "industrial"
-  | "bohemian"
-  | "midcentury"
-  | "coastal"
-  | "traditional"
-  | "luxury";
+  | "hotel-boutique"
+  | "cozy-retreat"
+  | "resort-style"
+  | "urban-lux"
+  | "nordic-airbnb"
+  | "instagram-worthy"
+  | "business-ready"
+  | "family-friendly"
+  | "budget-refresh"
+  | "rustic-charm";
+
+export type GuestType = "business" | "couples" | "families" | "digital-nomads";
 
 export type RedesignCreationInput = {
   roomType: RoomType;
   style: RedesignStyle;
   imageBase64: string;
   customInstructions?: string;
+  guestType?: GuestType;
 };
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
-  living: "Living Room",
-  bedroom: "Bedroom",
+  living: "Living Area",
+  bedroom: "Guest Bedroom",
   kitchen: "Kitchen",
   bathroom: "Bathroom",
   dining: "Dining Room",
-  office: "Office",
+  entryway: "Entryway",
   outdoor: "Outdoor",
+  patio: "Patio / Balcony",
 };
 
 export const REDESIGN_STYLE_LABELS: Record<RedesignStyle, string> = {
-  modern: "Modern",
-  minimalist: "Minimalist",
-  cozy: "Cozy",
-  scandinavian: "Scandinavian",
-  industrial: "Industrial",
-  bohemian: "Bohemian",
-  midcentury: "Mid-Century",
-  coastal: "Coastal",
-  traditional: "Traditional",
-  luxury: "Luxury",
+  "hotel-boutique": "Hotel Boutique",
+  "cozy-retreat": "Cozy Retreat",
+  "resort-style": "Resort Style",
+  "urban-lux": "Urban Lux",
+  "nordic-airbnb": "Nordic Airbnb",
+  "instagram-worthy": "Instagram-Worthy",
+  "business-ready": "Business Ready",
+  "family-friendly": "Family Friendly",
+  "budget-refresh": "Budget Refresh",
+  "rustic-charm": "Rustic Charm",
+};
+
+export const GUEST_TYPE_LABELS: Record<GuestType, string> = {
+  business: "Business",
+  couples: "Couples",
+  families: "Families",
+  "digital-nomads": "Digital Nomads",
 };

@@ -492,31 +492,28 @@ export function toGeminiImageParts(
 // Room Redesign Prompt
 // ============================================================================
 
-export const ROOM_STYLES = [
-  "modern",
-  "minimalist",
-  "industrial",
-  "bohemian",
-  "scandinavian",
-  "mid-century modern",
-  "contemporary",
-  "rustic",
-  "coastal",
-  "traditional",
-  "art deco",
-  "japandi",
-  "farmhouse",
-  "mediterranean",
-] as const;
-
-export type RoomStyle = (typeof ROOM_STYLES)[number];
+const GUEST_TYPE_PROMPT_ADDITIONS: Record<string, string> = {
+  business:
+    "Emphasize a dedicated workspace area with a clean desk, ergonomic chair, good task lighting, and cable management. The space should feel professional and productive.",
+  couples:
+    "Create a romantic, intimate ambiance with soft warm lighting, plush textures, candles or decorative accents, and a cozy, inviting bed setup. The space should feel like a getaway.",
+  families:
+    "Prioritize a safe, spacious layout with durable and practical furniture, ample storage, and a welcoming atmosphere suitable for guests of all ages.",
+  "digital-nomads":
+    "Include a well-lit desk area with comfortable seating for long work sessions, natural light, and a modern aesthetic that inspires focus and creativity.",
+};
 
 export function buildRedesignPrompt(
   roomType: string,
   style: string,
-  customPrompt?: string
+  customPrompt?: string,
+  guestType?: string
 ): string {
-  let prompt = `Redesign this ${roomType} in a ${style} style. Keep the exact same room structure, dimensions, windows, and doors. Change the furniture, decorations, colors, textures, and lighting to match the ${style} aesthetic. Make it look like a professional interior design photo, photorealistic.`;
+  let prompt = `Redesign this ${roomType} in a ${style} style, optimized for a short-term rental listing. Keep the exact same room structure, dimensions, windows, and doors. Change the furniture, decorations, colors, textures, and lighting to match the ${style} aesthetic. The result should look like a professional Airbnb listing photo — clean, bright, well-staged, and inviting. Focus on perceived value: the space should look like it justifies a higher nightly rate. Photorealistic quality.`;
+
+  if (guestType && GUEST_TYPE_PROMPT_ADDITIONS[guestType]) {
+    prompt += ` ${GUEST_TYPE_PROMPT_ADDITIONS[guestType]}`;
+  }
 
   if (customPrompt) {
     prompt += ` Additional instructions: ${customPrompt}`;

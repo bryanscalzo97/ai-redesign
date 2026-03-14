@@ -6,8 +6,10 @@ import {
   SPACING,
 } from "@/constants/designTokens";
 import {
+  GUEST_TYPE_LABELS,
   REDESIGN_STYLE_LABELS,
   ROOM_TYPE_LABELS,
+  type GuestType,
   type RedesignCreationInput,
   type RedesignStyle,
   type RoomType,
@@ -33,14 +35,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 type CameraStep = "camera" | "options" | "generating" | "result";
 
 const LOADING_MESSAGES = [
-  "Redesigning your room...",
-  "Applying style magic...",
-  "Rearranging the furniture...",
+  "Staging your listing...",
+  "Optimizing for bookings...",
+  "Styling the space...",
   "Picking the perfect palette...",
-  "Almost there...",
+  "Arranging furniture for photos...",
   "Adding finishing touches...",
-  "Consulting the design oracle...",
-  "Mixing textures and colors...",
+  "Maximizing guest appeal...",
+  "Almost ready to list...",
 ];
 
 function LoadingMessages() {
@@ -75,10 +77,12 @@ export function CameraCapture() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [roomType, setRoomType] = useState<RoomType | null>(null);
   const [style, setStyle] = useState<RedesignStyle | null>(null);
+  const [guestType, setGuestType] = useState<GuestType | null>(null);
   const [customInstructions, setCustomInstructions] = useState("");
 
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
+  const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
 
   // Watch generation state to transition steps
   useEffect(() => {
@@ -118,6 +122,7 @@ export function CameraCapture() {
     setImageBase64(null);
     setRoomType(null);
     setStyle(null);
+    setGuestType(null);
     reset();
     setStep("camera");
   }, [reset]);
@@ -130,17 +135,19 @@ export function CameraCapture() {
       style,
       imageBase64,
       customInstructions: customInstructions.trim() || undefined,
+      guestType: guestType ?? undefined,
     };
 
     setStep("generating");
     generate(input);
-  }, [imageBase64, roomType, style, customInstructions, generate]);
+  }, [imageBase64, roomType, style, guestType, customInstructions, generate]);
 
   const handleNewScan = useCallback(() => {
     setCapturedUri(null);
     setImageBase64(null);
     setRoomType(null);
     setStyle(null);
+    setGuestType(null);
     reset();
     setStep("camera");
   }, [reset]);
@@ -167,7 +174,7 @@ export function CameraCapture() {
           Camera access needed
         </Text>
         <Text type="body" weight="normal" style={s.permissionSubtext}>
-          Allow camera access to scan your room and generate redesigns in real time.
+          Allow camera access to scan your space and optimize your listing photos.
         </Text>
         <Button
           title="Allow Camera"
@@ -277,7 +284,7 @@ export function CameraCapture() {
             <Icon symbol="arrow.left" size="md" color="#fff" />
           </Pressable>
           <Text type="body" weight="semibold" style={{ color: "#fff" }}>
-            Customize redesign
+            Optimize your listing
           </Text>
           <View style={s.topButton} />
         </View>
@@ -302,7 +309,7 @@ export function CameraCapture() {
           {/* Room type */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Room type
+              Space type
             </Text>
             <ScrollView
               horizontal
@@ -333,7 +340,7 @@ export function CameraCapture() {
           {/* Style */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Redesign style
+              Listing style
             </Text>
             <ScrollView
               horizontal
@@ -361,6 +368,37 @@ export function CameraCapture() {
             </ScrollView>
           </View>
 
+          {/* Guest type (optional) */}
+          <View style={s.optionSection}>
+            <Text type="body" weight="semibold" style={s.optionLabel}>
+              Target guest (optional)
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.chipsRow}
+            >
+              {guestTypes.map((key) => {
+                const selected = guestType === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setGuestType(selected ? null : key)}
+                    style={[s.chip, selected && s.chipSelected]}
+                  >
+                    <Text
+                      type="body"
+                      weight={selected ? "semibold" : "normal"}
+                      style={{ color: "#fff" }}
+                    >
+                      {GUEST_TYPE_LABELS[key]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+
           {/* Generate or Sign In */}
           {isAuthenticated ? (
             <Button
@@ -375,10 +413,10 @@ export function CameraCapture() {
           ) : (
             <View style={s.signInPrompt}>
               <Text type="lg" weight="bold" style={{ color: "#fff", textAlign: "center" }}>
-                Sign in to generate your redesign
+                Sign in to optimize your listing
               </Text>
               <Text type="sm" style={{ color: "rgba(255,255,255,0.6)", textAlign: "center", marginTop: 4 }}>
-                Create an account to start redesigning your rooms.
+                Create an account to start optimizing your spaces.
               </Text>
               <Button
                 title="Sign in"
@@ -416,7 +454,7 @@ export function CameraCapture() {
           />
         </Pressable>
         <Text type="subtitle" weight="bold" style={{ color: "#fff" }}>
-          Scan Room
+          Scan Space
         </Text>
         <Pressable onPress={toggleFacing} style={s.topButton}>
           <Icon symbol="camera.rotate.fill" size="md" color="#fff" />
@@ -431,7 +469,7 @@ export function CameraCapture() {
         <View style={s.frameCornerBR} />
       </View>
       <Text type="caption" weight="normal" style={s.guideText}>
-        Frame your room within the guide
+        Frame your space within the guide
       </Text>
 
       {/* Bottom controls */}

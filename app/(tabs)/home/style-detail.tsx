@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
-import { findStyleByKey, findRoomTypeByKey } from "@/constants/redesign-data";
+import { findStyleByKey, findRoomTypeByKey, findGuestTypeByKey } from "@/constants/redesign-data";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Image } from "expo-image";
@@ -20,7 +20,7 @@ const screenWidth = Dimensions.get("window").width;
 const GALLERY_SIZE = (screenWidth - SPACING.MD * 2 - 12) / 2;
 
 export default function StyleDetailScreen() {
-  const { key, type } = useLocalSearchParams<{ key: string; type: "style" | "room" }>();
+  const { key, type } = useLocalSearchParams<{ key: string; type: "style" | "room" | "guest" }>();
   const router = useRouter();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
@@ -52,7 +52,11 @@ export default function StyleDetailScreen() {
   });
 
   const data =
-    type === "room" ? findRoomTypeByKey(key ?? "") : findStyleByKey(key ?? "");
+    type === "guest"
+      ? findGuestTypeByKey(key ?? "")
+      : type === "room"
+        ? findRoomTypeByKey(key ?? "")
+        : findStyleByKey(key ?? "");
 
   if (!data) {
     return (
@@ -89,7 +93,7 @@ export default function StyleDetailScreen() {
                 {data.label}
               </Text>
               <Text type="default" weight="normal" style={{ opacity: 0.7 }}>
-                {type === "room" ? "Room Type" : "Design Style"}
+                {type === "guest" ? "Guest Type" : type === "room" ? "Space Type" : "Listing Style"}
               </Text>
             </View>
           </View>
