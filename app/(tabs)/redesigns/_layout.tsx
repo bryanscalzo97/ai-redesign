@@ -19,6 +19,13 @@ export default function RedesignsLayout() {
           headerLargeTitle: false,
         }}
       />
+      <Stack.Screen
+        name="project-detail"
+        options={{
+          title: "Property",
+          headerLargeTitle: false,
+        }}
+      />
     </Stack>
   );
 }

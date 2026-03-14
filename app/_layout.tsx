@@ -1,5 +1,6 @@
 import { DURATION } from "@/constants/designTokens";
 import { AuthContext, AuthProvider } from "@/context/AuthContext";
+import { ProjectProvider } from "@/context/ProjectContext";
 import { RedesignCreationProvider } from "@/context/RedesignCreationContext";
 import { AccentColorProvider, useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -133,7 +134,9 @@ export default function RootLayout() {
       <AuthProvider>
         <AccentColorProvider>
           <RedesignCreationProvider>
-            <AppContent />
+            <ProjectProvider>
+              <AppContent />
+            </ProjectProvider>
           </RedesignCreationProvider>
         </AccentColorProvider>
       </AuthProvider>

@@ -12,9 +12,9 @@ export default function TabLayout() {
         <NativeTabs.Trigger.Icon sf="camera.viewfinder" drawable="ic_menu_camera" />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="redesigns">
-        <NativeTabs.Trigger.Label>Redesigns</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>Properties</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf="photo.fill.on.rectangle.fill"
+          sf="building.2.fill"
           drawable="ic_menu_gallery"
         />
       </NativeTabs.Trigger>

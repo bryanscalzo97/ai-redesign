@@ -1,4 +1,4 @@
-import { RedesignHistory } from "@/components/screens/RedesignHistory";
+import { ProjectList } from "@/components/screens/ProjectList";
 import { Text } from "@/components/ui/Text";
 import { Stack } from "expo-router";
 
@@ -8,11 +8,11 @@ export default function RedesignsScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            Redesigns
+            Properties
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>
-      <RedesignHistory />
+      <ProjectList />
     </>
   );
 }

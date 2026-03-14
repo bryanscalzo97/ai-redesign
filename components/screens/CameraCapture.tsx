@@ -1,3 +1,4 @@
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
@@ -15,6 +16,7 @@ import {
   type RoomType,
 } from "@/types/redesign";
 import { AuthContext } from "@/context/AuthContext";
+import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
@@ -24,15 +26,20 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Linking,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type CameraStep = "camera" | "options" | "generating" | "result";
+
+const screenWidth = Dimensions.get("window").width;
+const screenHeight = Dimensions.get("window").height;
 
 const LOADING_MESSAGES = [
   "Staging your listing...",
@@ -68,6 +75,7 @@ export function CameraCapture() {
   const cameraRef = useRef<CameraView>(null);
   const { generate, isGenerating, generatedImage, error, reset } = useRedesignCreation();
   const { isAuthenticated } = use(AuthContext);
+  const { projects, createProject, addRedesignToProject } = useProjects();
 
   const [permission, requestPermission] = useCameraPermissions();
   const [facing, setFacing] = useState<"front" | "back">("back");
@@ -79,6 +87,12 @@ export function CameraCapture() {
   const [style, setStyle] = useState<RedesignStyle | null>(null);
   const [guestType, setGuestType] = useState<GuestType | null>(null);
   const [customInstructions, setCustomInstructions] = useState("");
+
+  // Result state
+  const [listingText, setListingText] = useState<string | null>(null);
+  const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedToProject, setSavedToProject] = useState(false);
 
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
@@ -123,6 +137,8 @@ export function CameraCapture() {
     setRoomType(null);
     setStyle(null);
     setGuestType(null);
+    setListingText(null);
+    setSavedToProject(false);
     reset();
     setStep("camera");
   }, [reset]);
@@ -148,6 +164,8 @@ export function CameraCapture() {
     setRoomType(null);
     setStyle(null);
     setGuestType(null);
+    setListingText(null);
+    setSavedToProject(false);
     reset();
     setStep("camera");
   }, [reset]);
@@ -159,6 +177,109 @@ export function CameraCapture() {
   const toggleFacing = useCallback(() => {
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   }, []);
+
+  // ── Listing text generation ──
+  const handleGenerateListingText = useCallback(async () => {
+    if (!roomType || !style) return;
+    setIsGeneratingText(true);
+    try {
+      const response = await fetch("/api/listing-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomType,
+          style,
+          guestType: guestType ?? undefined,
+        }),
+      });
+      const data = await response.json();
+      if (data.success && data.listingText) {
+        setListingText(data.listingText);
+      } else {
+        Alert.alert("Error", data.error || "Failed to generate listing text");
+      }
+    } catch {
+      Alert.alert("Error", "Failed to connect to the server");
+    } finally {
+      setIsGeneratingText(false);
+    }
+  }, [roomType, style, guestType]);
+
+  const handleShareText = useCallback(() => {
+    if (listingText) {
+      Share.share({ message: listingText });
+    }
+  }, [listingText]);
+
+  // ── Save to project ──
+  const handleSaveToProject = useCallback(() => {
+    const options = projects.map((p) => p.name);
+    options.push("New Property...");
+    options.push("Cancel");
+
+    Alert.alert("Save to Property", "Choose a property for this redesign", [
+      ...projects.map((p) => ({
+        text: p.name,
+        onPress: () => saveToProject(p.id),
+      })),
+      {
+        text: "New Property...",
+        onPress: () => {
+          Alert.prompt(
+            "New Property",
+            "Enter a name for your property",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Create & Save",
+                onPress: async (name: string | undefined) => {
+                  if (name?.trim()) {
+                    const project = await createProject(name.trim());
+                    await saveToProject(project.id);
+                  }
+                },
+              },
+            ],
+            "plain-text"
+          );
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  }, [projects, createProject, imageBase64, generatedImage, roomType, style, guestType, customInstructions, listingText]);
+
+  const saveToProject = useCallback(
+    async (projectId: string) => {
+      if (!imageBase64 || !generatedImage || !roomType || !style) return;
+      setIsSaving(true);
+      try {
+        await addRedesignToProject(projectId, {
+          roomType,
+          style,
+          guestType: guestType ?? undefined,
+          customInstructions: customInstructions.trim() || undefined,
+          beforeBase64: imageBase64,
+          afterBase64: generatedImage,
+          listingText: listingText ?? undefined,
+        });
+        setSavedToProject(true);
+      } catch (err) {
+        Alert.alert("Error", "Failed to save redesign");
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [
+      imageBase64,
+      generatedImage,
+      roomType,
+      style,
+      guestType,
+      customInstructions,
+      listingText,
+      addRedesignToProject,
+    ]
+  );
 
   // Permission not yet determined
   if (!permission) {
@@ -200,26 +321,96 @@ export function CameraCapture() {
     );
   }
 
-  // Result step - show generated image
-  if (step === "result" && generatedImage) {
+  // ── Result step — before/after slider + listing text + save ──
+  if (step === "result" && generatedImage && capturedUri) {
     return (
       <View style={s.container}>
-        <Image
-          source={{ uri: `data:image/png;base64,${generatedImage}` }}
-          style={StyleSheet.absoluteFillObject}
-          contentFit="cover"
-        />
+        <ScrollView
+          style={s.resultScroll}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        >
+          {/* Before / After slider */}
+          <BeforeAfterSlider
+            beforeUri={capturedUri}
+            afterUri={`data:image/png;base64,${generatedImage}`}
+            width={screenWidth}
+            height={screenWidth}
+          />
 
-        {/* Top bar */}
-        <View style={[s.topBar, { paddingTop: insets.top + SPACING.SM }]}>
-          <View style={s.topButton} />
-          <Text type="body" weight="semibold" style={{ color: "#fff" }}>
-            Your Redesign
-          </Text>
-          <View style={s.topButton} />
-        </View>
+          {/* Action buttons */}
+          <View style={s.resultActions}>
+            {savedToProject ? (
+              <View style={s.savedBadge}>
+                <Text type="sm" weight="semibold" style={{ color: "#16A34A" }}>
+                  Saved to property
+                </Text>
+              </View>
+            ) : (
+              <Button
+                title={isSaving ? "Saving..." : "Save to Property"}
+                onPress={handleSaveToProject}
+                disabled={isSaving}
+                variant="solid"
+                size="lg"
+                symbol="folder.badge.plus"
+              />
+            )}
+          </View>
 
-        {/* Bottom actions */}
+          {/* Listing text */}
+          <View style={s.listingTextSection}>
+            <Text type="lg" weight="bold" lightColor="white" darkColor="white">
+              Listing Description
+            </Text>
+
+            {listingText ? (
+              <>
+                <Text
+                  type="sm"
+                  style={{ color: "rgba(255,255,255,0.8)", lineHeight: 20, marginTop: 8 }}
+                  selectable
+                >
+                  {listingText}
+                </Text>
+                <View style={s.textActions}>
+                  <Button
+                    title="Share"
+                    onPress={handleShareText}
+                    variant="soft"
+                    size="md"
+                    style={{ flex: 1 } as any}
+                  />
+                  <Button
+                    title="Regenerate"
+                    onPress={handleGenerateListingText}
+                    variant="soft"
+                    size="md"
+                    disabled={isGeneratingText}
+                    style={{ flex: 1 } as any}
+                  />
+                </View>
+              </>
+            ) : isGeneratingText ? (
+              <View style={s.generatingTextRow}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Writing listing description...
+                </Text>
+              </View>
+            ) : (
+              <Button
+                title="Generate Listing Description"
+                onPress={handleGenerateListingText}
+                variant="soft"
+                size="lg"
+                symbol="text.badge.star"
+                style={{ marginTop: 8 } as any}
+              />
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Fixed bottom bar */}
         <View style={[s.resultBottomBar, { paddingBottom: insets.bottom + SPACING.MD }]}>
           <Button
             title="New Scan"
@@ -230,7 +421,7 @@ export function CameraCapture() {
             style={{ flex: 1 } as any}
           />
           <Button
-            title="View in Redesigns"
+            title="Properties"
             onPress={() => router.push("/(tabs)/redesigns")}
             variant="solid"
             size="lg"
@@ -671,6 +862,34 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.LG,
   },
   // Result step styles
+  resultScroll: {
+    flex: 1,
+  },
+  resultActions: {
+    paddingHorizontal: SPACING.MD,
+    paddingTop: SPACING.MD,
+  },
+  savedBadge: {
+    backgroundColor: "rgba(22,163,74,0.15)",
+    borderRadius: BORDER_RADIUS.FULL,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  listingTextSection: {
+    paddingHorizontal: SPACING.MD,
+    marginTop: SPACING.LG,
+  },
+  textActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: SPACING.MD,
+  },
+  generatingTextRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.SM,
+    paddingVertical: SPACING.MD,
+  },
   resultBottomBar: {
     position: "absolute",
     bottom: 0,
@@ -680,6 +899,7 @@ const s = StyleSheet.create({
     gap: 12,
     paddingHorizontal: SPACING.MD,
     paddingTop: SPACING.MD,
+    backgroundColor: "rgba(0,0,0,0.8)",
   },
   // Error banner
   errorBanner: {
