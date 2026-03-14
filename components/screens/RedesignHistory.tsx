@@ -6,6 +6,7 @@ import { ALBUM_NAME } from "@/lib/save-to-library";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
+import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -29,6 +30,7 @@ export function RedesignHistory() {
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const router = useRouter();
+  const { saveCount } = useRedesignCreation();
 
   const [permissionState, setPermissionState] =
     useState<PermissionState>("loading");
@@ -83,6 +85,13 @@ export function RedesignHistory() {
       setIsLoading(false);
     }
   }, [permissionState, loadAssets]);
+
+  // Reload when a new image is saved anywhere in the app
+  useEffect(() => {
+    if (saveCount > 0 && permissionState === "granted") {
+      loadAssets();
+    }
+  }, [saveCount, permissionState, loadAssets]);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);

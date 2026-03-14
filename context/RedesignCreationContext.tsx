@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import type { RedesignCreationInput } from "@/types/redesign";
 
 export interface RedesignCreationState {
@@ -32,11 +33,14 @@ export interface RedesignCreationActions {
   generate: (input: RedesignCreationInput) => Promise<void>;
   retry: () => void;
   reset: () => void;
+  notifySave: () => void;
 }
 
 export interface RedesignCreationContextValue
   extends RedesignCreationState,
-    RedesignCreationActions {}
+    RedesignCreationActions {
+  saveCount: number;
+}
 
 const TOTAL_STEPS = 3;
 
@@ -56,6 +60,7 @@ const initialState: RedesignCreationState = {
 export const RedesignCreationContext =
   createContext<RedesignCreationContextValue>({
     ...initialState,
+    saveCount: 0,
     setImage: () => {},
     setRoomType: () => {},
     setStyle: () => {},
@@ -66,6 +71,7 @@ export const RedesignCreationContext =
     generate: async () => {},
     retry: () => {},
     reset: () => {},
+    notifySave: () => {},
   });
 
 export function RedesignCreationProvider({
@@ -74,6 +80,7 @@ export function RedesignCreationProvider({
   children: ReactNode;
 }) {
   const [state, setState] = useState<RedesignCreationState>(initialState);
+  const [saveCount, setSaveCount] = useState(0);
   const lastInputRef = useRef<RedesignCreationInput | null>(null);
 
   const setImage = useCallback(
@@ -153,6 +160,14 @@ export function RedesignCreationProvider({
         return;
       }
 
+      // Save to photo library automatically
+      try {
+        await saveBase64ToAlbum(data.imageData, "png");
+        setSaveCount((prev) => prev + 1);
+      } catch (saveError) {
+        console.error("Failed to save to library:", saveError);
+      }
+
       setState((prev) => ({
         ...prev,
         isGenerating: false,
@@ -180,8 +195,13 @@ export function RedesignCreationProvider({
     setState({ ...initialState, startedAt: new Date(), updatedAt: new Date() });
   }, []);
 
+  const notifySave = useCallback(() => {
+    setSaveCount((prev) => prev + 1);
+  }, []);
+
   const contextValue: RedesignCreationContextValue = {
     ...state,
+    saveCount,
     setImage,
     setRoomType,
     setStyle,
@@ -192,6 +212,7 @@ export function RedesignCreationProvider({
     generate,
     retry,
     reset,
+    notifySave,
   };
 
   return (

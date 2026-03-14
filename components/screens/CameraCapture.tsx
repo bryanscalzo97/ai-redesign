@@ -18,8 +18,9 @@ import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useRouter } from "expo-router";
-import { use, useCallback, useRef, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   Pressable,
@@ -29,13 +30,41 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type CameraStep = "camera" | "options";
+type CameraStep = "camera" | "options" | "generating" | "result";
+
+const LOADING_MESSAGES = [
+  "Redesigning your room...",
+  "Applying style magic...",
+  "Rearranging the furniture...",
+  "Picking the perfect palette...",
+  "Almost there...",
+  "Adding finishing touches...",
+  "Consulting the design oracle...",
+  "Mixing textures and colors...",
+];
+
+function LoadingMessages() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <Text type="lg" weight="semibold" style={{ color: "#fff", textAlign: "center" }}>
+      {LOADING_MESSAGES[index]}
+    </Text>
+  );
+}
 
 export function CameraCapture() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
-  const { generate } = useRedesignCreation();
+  const { generate, isGenerating, generatedImage, error, reset } = useRedesignCreation();
   const { isAuthenticated } = use(AuthContext);
 
   const [permission, requestPermission] = useCameraPermissions();
@@ -50,6 +79,17 @@ export function CameraCapture() {
 
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
+
+  // Watch generation state to transition steps
+  useEffect(() => {
+    if (step === "generating" && !isGenerating) {
+      if (generatedImage) {
+        setStep("result");
+      } else if (error) {
+        setStep("options");
+      }
+    }
+  }, [step, isGenerating, generatedImage, error]);
 
   const resizeAndCompress = useCallback(async (uri: string): Promise<string | null> => {
     const manipulated = await ImageManipulator.manipulateAsync(
@@ -76,15 +116,13 @@ export function CameraCapture() {
   const handleRetake = useCallback(() => {
     setCapturedUri(null);
     setImageBase64(null);
+    setRoomType(null);
+    setStyle(null);
+    reset();
     setStep("camera");
-  }, []);
+  }, [reset]);
 
   const handleGenerate = useCallback(() => {
-    if (!isAuthenticated) {
-      router.push("/auth-sheet");
-      return;
-    }
-
     if (!imageBase64 || !roomType || !style) return;
 
     const input: RedesignCreationInput = {
@@ -94,9 +132,18 @@ export function CameraCapture() {
       customInstructions: customInstructions.trim() || undefined,
     };
 
+    setStep("generating");
     generate(input);
-    router.replace("/(tabs)/home");
-  }, [isAuthenticated, imageBase64, roomType, style, customInstructions, generate, router]);
+  }, [imageBase64, roomType, style, customInstructions, generate]);
+
+  const handleNewScan = useCallback(() => {
+    setCapturedUri(null);
+    setImageBase64(null);
+    setRoomType(null);
+    setStyle(null);
+    reset();
+    setStep("camera");
+  }, [reset]);
 
   const toggleFlash = useCallback(() => {
     setFlash((prev) => (prev === "off" ? "on" : "off"));
@@ -146,6 +193,72 @@ export function CameraCapture() {
     );
   }
 
+  // Result step - show generated image
+  if (step === "result" && generatedImage) {
+    return (
+      <View style={s.container}>
+        <Image
+          source={{ uri: `data:image/png;base64,${generatedImage}` }}
+          style={StyleSheet.absoluteFillObject}
+          contentFit="cover"
+        />
+
+        {/* Top bar */}
+        <View style={[s.topBar, { paddingTop: insets.top + SPACING.SM }]}>
+          <View style={s.topButton} />
+          <Text type="body" weight="semibold" style={{ color: "#fff" }}>
+            Your Redesign
+          </Text>
+          <View style={s.topButton} />
+        </View>
+
+        {/* Bottom actions */}
+        <View style={[s.resultBottomBar, { paddingBottom: insets.bottom + SPACING.MD }]}>
+          <Button
+            title="New Scan"
+            onPress={handleNewScan}
+            variant="soft"
+            size="lg"
+            radius="full"
+            style={{ flex: 1 } as any}
+          />
+          <Button
+            title="View in Redesigns"
+            onPress={() => router.push("/(tabs)/redesigns")}
+            variant="solid"
+            size="lg"
+            radius="full"
+            style={{ flex: 1 } as any}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  // Generating step - loading with animated messages
+  if (step === "generating") {
+    return (
+      <View style={s.container}>
+        {capturedUri && (
+          <Image
+            source={{ uri: capturedUri }}
+            style={StyleSheet.absoluteFillObject}
+            contentFit="cover"
+          />
+        )}
+        <View style={[StyleSheet.absoluteFillObject, s.generatingOverlay]} />
+
+        <View style={s.generatingContent}>
+          <ActivityIndicator size="large" color="#fff" />
+          <LoadingMessages />
+          <Text type="sm" style={{ color: "rgba(255,255,255,0.5)", textAlign: "center", marginTop: 8 }}>
+            This may take a moment
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
   // Options step - photo captured, select room type & style
   if (step === "options" && capturedUri) {
     const canGenerate = Boolean(roomType && style);
@@ -168,6 +281,15 @@ export function CameraCapture() {
           </Text>
           <View style={s.topButton} />
         </View>
+
+        {/* Error banner */}
+        {error && (
+          <View style={s.errorBanner}>
+            <Text type="sm" weight="semibold" style={{ color: "#fff" }}>
+              {error}
+            </Text>
+          </View>
+        )}
 
         {/* Options */}
         <ScrollView
@@ -239,16 +361,36 @@ export function CameraCapture() {
             </ScrollView>
           </View>
 
-          {/* Generate */}
-          <Button
-            title="Generate Redesign"
-            onPress={handleGenerate}
-            disabled={!canGenerate}
-            variant="solid"
-            size="lg"
-            symbol="wand.and.stars"
-            style={s.generateButton}
-          />
+          {/* Generate or Sign In */}
+          {isAuthenticated ? (
+            <Button
+              title="Generate Redesign"
+              onPress={handleGenerate}
+              disabled={!canGenerate}
+              variant="solid"
+              size="lg"
+              symbol="wand.and.stars"
+              style={s.generateButton}
+            />
+          ) : (
+            <View style={s.signInPrompt}>
+              <Text type="lg" weight="bold" style={{ color: "#fff", textAlign: "center" }}>
+                Sign in to generate your redesign
+              </Text>
+              <Text type="sm" style={{ color: "rgba(255,255,255,0.6)", textAlign: "center", marginTop: 4 }}>
+                Create an account to start redesigning your rooms.
+              </Text>
+              <Button
+                title="Sign in"
+                onPress={() => router.push("/auth-sheet")}
+                variant="solid"
+                size="lg"
+                color="neutral"
+                radius="full"
+                style={{ marginTop: 16 } as any}
+              />
+            </View>
+          )}
         </ScrollView>
       </View>
     );
@@ -473,5 +615,43 @@ const s = StyleSheet.create({
   },
   generateButton: {
     marginTop: SPACING.MD,
+  },
+  signInPrompt: {
+    marginTop: SPACING.MD,
+    alignItems: "center",
+    paddingHorizontal: SPACING.MD,
+  },
+  // Generating step styles
+  generatingOverlay: {
+    backgroundColor: "rgba(0,0,0,0.75)",
+  },
+  generatingContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 16,
+    paddingHorizontal: SPACING.LG,
+  },
+  // Result step styles
+  resultBottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: SPACING.MD,
+    paddingTop: SPACING.MD,
+  },
+  // Error banner
+  errorBanner: {
+    position: "absolute",
+    top: 100,
+    left: SPACING.MD,
+    right: SPACING.MD,
+    backgroundColor: "rgba(220,38,38,0.9)",
+    borderRadius: BORDER_RADIUS.MD,
+    padding: SPACING.MD,
+    zIndex: 10,
   },
 });

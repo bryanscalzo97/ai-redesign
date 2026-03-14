@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import { shareBase64Image } from "@/lib/share-image";
 import { Image } from "expo-image";
@@ -29,6 +30,7 @@ export function RedesignResult({
   const backgroundColor = getBackgroundColor();
   const { isAndroid } = usePlatform();
   const { top } = useSafeAreaInsets();
+  const { notifySave } = useRedesignCreation();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = useCallback(async () => {
@@ -36,6 +38,7 @@ export function RedesignResult({
     setIsSaving(true);
     try {
       await saveBase64ToAlbum(generatedImage, "png");
+      notifySave();
       Alert.alert("Saved", "Image saved to your photo library.");
     } catch (err) {
       Alert.alert(
