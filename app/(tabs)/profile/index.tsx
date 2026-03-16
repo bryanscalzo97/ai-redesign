@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Text } from "@/components/ui/Text";
 import { AuthContext } from "@/context/AuthContext";
+import { useProjects } from "@/context/ProjectContext";
 import { authClient } from "@/lib/auth-client";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -104,6 +105,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAuthenticated, user } = use(AuthContext);
+  const { projects, deleteProject } = useProjects();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
@@ -220,6 +222,41 @@ export default function ProfileScreen() {
               <Pressable onPress={confirmSignOut} style={s.logoutRow}>
                 <Text type="default" weight="medium" style={{ color: "#ef4444" }}>
                   Log out
+                </Text>
+              </Pressable>
+            </SectionCard>
+          </View>
+        )}
+
+        {/* Data Management */}
+        {projects.length > 0 && (
+          <View style={s.section}>
+            <SectionHeader title="Data" />
+            <SectionCard>
+              <Pressable
+                onPress={() => {
+                  Alert.alert(
+                    "Delete All Data",
+                    `This will permanently delete all ${projects.length} properties and their room scans. This cannot be undone.`,
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete Everything",
+                        style: "destructive",
+                        onPress: async () => {
+                          for (const p of projects) {
+                            await deleteProject(p.id);
+                          }
+                          Alert.alert("Done", "All data has been deleted.");
+                        },
+                      },
+                    ]
+                  );
+                }}
+                style={s.logoutRow}
+              >
+                <Text type="default" weight="medium" style={{ color: "#ef4444" }}>
+                  Delete all data ({projects.length} {projects.length === 1 ? "property" : "properties"})
                 </Text>
               </Pressable>
             </SectionCard>
