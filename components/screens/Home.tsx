@@ -26,6 +26,7 @@ import * as MediaLibrary from "expo-media-library";
 import { Link, useRouter } from "expo-router";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Dimensions,
   Pressable,
   RefreshControl,
@@ -111,6 +112,65 @@ function StyleCard({
         </View>
       </Pressable>
     </Link>
+  );
+}
+
+// ─── Welcome Guide (first-time users) ───────────────────────────────────────
+function WelcomeGuide({
+  isDark,
+  onGetStarted,
+}: {
+  isDark: boolean;
+  onGetStarted: () => void;
+}) {
+  const cardBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+
+  const steps = [
+    { num: "1", label: "Name your property", desc: "Create your first listing" },
+    { num: "2", label: "Scan every room", desc: "Get AI scores and suggestions" },
+    { num: "3", label: "Follow the plan", desc: "Track improvements and ROI" },
+  ];
+
+  return (
+    <View style={s.welcomeSection}>
+      <View style={[s.welcomeCard, { backgroundColor: cardBg }]}>
+        <Text type="xl" weight="bold" lightColor="black" darkColor="white">
+          Welcome! Let's optimize your first property.
+        </Text>
+        <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.6, lineHeight: 20 }}>
+          In 2 minutes you'll have a score, an action plan, and know exactly how to get more bookings.
+        </Text>
+
+        <View style={s.welcomeSteps}>
+          {steps.map((step) => (
+            <View key={step.num} style={s.welcomeStep}>
+              <View style={[s.welcomeStepNum, { backgroundColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.08)" }]}>
+                <Text type="sm" weight="bold" lightColor="black" darkColor="white">
+                  {step.num}
+                </Text>
+              </View>
+              <View style={{ flex: 1, gap: 1 }}>
+                <Text type="sm" weight="semibold" lightColor="black" darkColor="white">
+                  {step.label}
+                </Text>
+                <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+                  {step.desc}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <Button
+          title="Add Your First Property"
+          onPress={onGetStarted}
+          variant="solid"
+          size="lg"
+          symbol="plus"
+          radius="full"
+        />
+      </View>
+    </View>
   );
 }
 
@@ -278,7 +338,7 @@ export function Home() {
   const colorScheme = useColorScheme();
   const router = useRouter();
   const { isAuthenticated } = use(AuthContext);
-  const { projects } = useProjects();
+  const { projects, createProject } = useProjects();
   const { saveCount } = useRedesignCreation();
 
   const [recentAssets, setRecentAssets] = useState<MediaLibrary.Asset[]>([]);
@@ -320,6 +380,28 @@ export function Home() {
     setIsRefreshing(false);
   }, [loadRecentAssets]);
 
+  const handleFirstProperty = useCallback(() => {
+    Alert.prompt(
+      "Your First Property",
+      "What's the name of your property? (e.g. Beach House, Downtown Apt)",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Create & Scan",
+          onPress: async (name: string | undefined) => {
+            if (name?.trim()) {
+              await createProject(name.trim());
+              router.push("/(tabs)/camera");
+            }
+          },
+        },
+      ],
+      "plain-text",
+      "",
+      "default"
+    );
+  }, [createProject, router]);
+
   const handlePropertyPress = useCallback(
     (id: string) => {
       router.push({
@@ -346,6 +428,11 @@ export function Home() {
         <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
       }
     >
+      {/* Welcome Guide (first-time, no projects) */}
+      {projects.length === 0 && (
+        <WelcomeGuide isDark={isDark} onGetStarted={handleFirstProperty} />
+      )}
+
       {/* Portfolio Dashboard (when properties with scans exist) */}
       {portfolio.scannedProperties > 0 && (
         <PortfolioDashboard
@@ -355,22 +442,24 @@ export function Home() {
         />
       )}
 
-      {/* Hero CTA */}
-      <Pressable
-        onPress={() => router.push("/(tabs)/camera")}
-        style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
-      >
-        <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-          {portfolio.scannedProperties > 0
-            ? "Scan Another Space"
-            : "Boost Your Bookings"}
-        </Text>
-        <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-          {portfolio.scannedProperties > 0
-            ? "Add more rooms to improve your portfolio score"
-            : "Scan your space and optimize it for more bookings"}
-        </Text>
-      </Pressable>
+      {/* Hero CTA (only when user has projects) */}
+      {projects.length > 0 && (
+        <Pressable
+          onPress={() => router.push("/(tabs)/camera")}
+          style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
+        >
+          <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
+            {portfolio.scannedProperties > 0
+              ? "Scan Another Space"
+              : "Boost Your Bookings"}
+          </Text>
+          <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
+            {portfolio.scannedProperties > 0
+              ? "Add more rooms to improve your portfolio score"
+              : "Scan your space and optimize it for more bookings"}
+          </Text>
+        </Pressable>
+      )}
 
       {/* Seasonal Recommendations */}
       {seasonalProjects.length > 0 && (
@@ -573,6 +662,31 @@ const s = StyleSheet.create({
     borderRadius: BORDER_RADIUS.LG,
     paddingVertical: SPACING.MD,
     paddingHorizontal: SPACING.MD,
+  },
+  // Welcome Guide
+  welcomeSection: {
+    marginTop: SPACING.MD,
+    paddingHorizontal: SPACING.MD,
+  },
+  welcomeCard: {
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.MD,
+    gap: SPACING.MD,
+  },
+  welcomeSteps: {
+    gap: SPACING.SM,
+  },
+  welcomeStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.SM,
+  },
+  welcomeStepNum: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
   // Portfolio Dashboard
   portfolioSection: {

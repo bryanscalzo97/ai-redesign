@@ -44,6 +44,7 @@ export interface ProjectContextValue {
       region?: Project["region"];
       hemisphere?: Project["hemisphere"];
       nightlyRate?: number;
+      occupancyPercent?: number;
     }
   ) => Promise<void>;
   toggleSuggestionChecked: (
@@ -145,6 +146,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         region?: Project["region"];
         hemisphere?: Project["hemisphere"];
         nightlyRate?: number;
+        occupancyPercent?: number;
       }
     ) => {
       await ProjectStorage.updateProjectMeta(projectId, meta);

@@ -100,24 +100,25 @@ export interface ROIEstimate {
 }
 
 /**
- * Estimates ROI based on score improvement and nightly rate.
+ * Estimates ROI based on score improvement, nightly rate, and occupancy.
  *
- * Model (simplified but defensible):
- * - Each point of score improvement above current → ~8% more bookings
- * - Assumes 50% baseline occupancy (15 nights/month)
- * - Extra bookings = baseline nights × lift%
+ * Model:
+ * - Each point of score improvement → ~8% more bookings
+ * - Uses host's actual occupancy (default 50% if not set)
+ * - Extra bookings = current booked nights × lift%
  * - Extra revenue = extra nights × nightly rate
- * - Payback = total cost / extra monthly revenue
+ * - Payback = remaining cost / extra monthly revenue
  */
 export function estimateROI(
   propertyScore: PropertyScore,
-  nightlyRate: number
+  nightlyRate: number,
+  occupancyPercent?: number
 ): ROIEstimate | null {
   if (nightlyRate <= 0) return null;
 
+  const occupancy = Math.min(100, Math.max(1, occupancyPercent ?? 50));
+
   const currentScore = propertyScore.averageScore;
-  // Projected score: assume completing all items brings score to ~8.0
-  // (conservative — we don't promise 10)
   const projectedScore = Math.min(
     10,
     currentScore + (10 - currentScore) * 0.5
@@ -125,10 +126,10 @@ export function estimateROI(
   const scoreDelta = projectedScore - currentScore;
   if (scoreDelta <= 0) return null;
 
-  const liftPerPoint = 0.08; // 8% more bookings per score point
+  const liftPerPoint = 0.08;
   const bookingLiftPercent = Math.round(scoreDelta * liftPerPoint * 100);
 
-  const baselineNightsPerMonth = 15; // 50% occupancy
+  const baselineNightsPerMonth = 30 * (occupancy / 100);
   const extraNights = baselineNightsPerMonth * (scoreDelta * liftPerPoint);
   const extraMonthlyRevenue = Math.round(extraNights * nightlyRate);
 

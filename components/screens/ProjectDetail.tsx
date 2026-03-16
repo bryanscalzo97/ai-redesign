@@ -441,11 +441,13 @@ function buildActionPlanText(
 function ROICard({
   propertyScore,
   nightlyRate,
+  occupancyPercent,
   projectId,
   isDark,
 }: {
   propertyScore: PropertyScore;
   nightlyRate: number | undefined;
+  occupancyPercent: number | undefined;
   projectId: string;
   isDark: boolean;
 }) {
@@ -473,7 +475,31 @@ function ROICard({
     );
   }, [projectId, nightlyRate, updateProjectMeta]);
 
-  const roi = nightlyRate ? estimateROI(propertyScore, nightlyRate) : null;
+  const handleSetOccupancy = useCallback(() => {
+    Alert.prompt(
+      "Current Occupancy",
+      "Enter your average occupancy rate (%)",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Save",
+          onPress: (val: string | undefined) => {
+            const pct = Number(val);
+            if (pct > 0 && pct <= 100) {
+              updateProjectMeta(projectId, { occupancyPercent: pct });
+            }
+          },
+        },
+      ],
+      "plain-text",
+      occupancyPercent?.toString() ?? "50",
+      "number-pad"
+    );
+  }, [projectId, occupancyPercent, updateProjectMeta]);
+
+  const roi = nightlyRate
+    ? estimateROI(propertyScore, nightlyRate, occupancyPercent)
+    : null;
 
   return (
     <View
@@ -490,9 +516,24 @@ function ROICard({
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
           ROI Estimate
         </Text>
-        <Pressable onPress={handleSetRate}>
+      </View>
+
+      {/* Rate + Occupancy inputs */}
+      <View style={s.roiInputRow}>
+        <Pressable onPress={handleSetRate} style={s.roiInputChip}>
+          <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+            Rate
+          </Text>
           <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
-            {nightlyRate ? `$${nightlyRate}/night` : "Set rate"}
+            {nightlyRate ? `$${nightlyRate}/night` : "Set"}
+          </Text>
+        </Pressable>
+        <Pressable onPress={handleSetOccupancy} style={s.roiInputChip}>
+          <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+            Occupancy
+          </Text>
+          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+            {occupancyPercent ? `${occupancyPercent}%` : "50%"}
           </Text>
         </Pressable>
       </View>
@@ -905,6 +946,7 @@ export function ProjectDetail() {
           <ROICard
             propertyScore={propertyScore}
             nightlyRate={project.nightlyRate}
+            occupancyPercent={project.occupancyPercent}
             projectId={project.id}
             isDark={isDark}
           />
@@ -1211,6 +1253,20 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   // ROI
+  roiInputRow: {
+    flexDirection: "row",
+    gap: SPACING.SM,
+  },
+  roiInputChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: BORDER_RADIUS.MD,
+    backgroundColor: "rgba(128,128,128,0.1)",
+  },
   roiGrid: {
     flexDirection: "row",
     flexWrap: "wrap",

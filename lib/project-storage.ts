@@ -98,6 +98,7 @@ export async function updateProjectMeta(
     region?: Project["region"];
     hemisphere?: Project["hemisphere"];
     nightlyRate?: number;
+    occupancyPercent?: number;
   }
 ): Promise<void> {
   const project = await getProject(projectId);
@@ -106,6 +107,7 @@ export async function updateProjectMeta(
   if (meta.region !== undefined) project.region = meta.region;
   if (meta.hemisphere !== undefined) project.hemisphere = meta.hemisphere;
   if (meta.nightlyRate !== undefined) project.nightlyRate = meta.nightlyRate;
+  if (meta.occupancyPercent !== undefined) project.occupancyPercent = meta.occupancyPercent;
   project.updatedAt = new Date().toISOString();
   await saveProject(project);
 }
