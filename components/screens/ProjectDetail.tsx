@@ -30,7 +30,7 @@ import type { PropertyRegion, Hemisphere, Urgency } from "@/types/seasonal";
 import { Image } from "expo-image";
 import { File as ExpoFile } from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -59,9 +59,15 @@ async function readFileAsBase64(uri: string): Promise<string> {
 }
 
 function scoreColor(score: number): string {
-  if (score < 4) return "#EF4444";
-  if (score <= 7) return "#EAB308";
-  return "#22C55E";
+  if (score < 4) return "#6366F1"; // indigo — "high potential"
+  if (score <= 7) return "#F59E0B"; // amber — "good"
+  return "#22C55E"; // green — "optimized"
+}
+
+function scoreLabel(score: number): string {
+  if (score < 4) return "High potential";
+  if (score <= 7) return "Good";
+  return "Optimized";
 }
 
 // ─── Insight Banner ─────────────────────────────────────────────────────────
@@ -92,26 +98,20 @@ function RedesignCard({
           contentFit="cover"
           transition={600}
         />
-        {entry.roomAnalysis ? (
-          <View
-            style={[
-              s.scoreBadge,
-              { backgroundColor: scoreColor(entry.roomAnalysis.score) },
-            ]}
-          >
-            <Text type="caption" weight="bold" style={{ color: "#fff" }}>
-              {entry.roomAnalysis.score.toFixed(1)}
-            </Text>
-          </View>
-        ) : (
-          <View
-            style={[s.scoreBadge, { backgroundColor: "rgba(0,0,0,0.5)" }]}
-          >
-            <Text type="caption" weight="bold" style={{ color: "#fff" }}>
-              ?
-            </Text>
-          </View>
-        )}
+        <View
+          style={[
+            s.scoreBadge,
+            {
+              backgroundColor: entry.roomAnalysis
+                ? scoreColor(entry.roomAnalysis.score)
+                : "rgba(0,0,0,0.5)",
+            },
+          ]}
+        >
+          <Text type="caption" weight="bold" style={{ color: "#fff" }}>
+            {entry.roomAnalysis ? entry.roomAnalysis.score.toFixed(1) : "..."}
+          </Text>
+        </View>
       </View>
       <Text
         type="caption"
@@ -405,10 +405,9 @@ function DashboardScoreCard({
         <Text
           type="body"
           weight="semibold"
-          lightColor="black"
-          darkColor="white"
+          style={{ color: scoreColor(averageScore) }}
         >
-          Property Score
+          {scoreLabel(averageScore)}
         </Text>
         <Text
           type="caption"
@@ -870,6 +869,7 @@ export function ProjectDetail() {
   const [editingMeta, setEditingMeta] = useState(false);
   const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
   const [analyzeProgress, setAnalyzeProgress] = useState("");
+  const [activeTab, setActiveTab] = useState<"overview" | "plan" | "insights">("overview");
   const [pickerRegion, setPickerRegion] = useState<PropertyRegion | undefined>(
     undefined
   );
@@ -994,6 +994,20 @@ export function ProjectDetail() {
     [project]
   );
 
+  // Auto-analyze unscored rooms on mount
+  const autoAnalyzeTriggered = useRef(false);
+  useEffect(() => {
+    if (
+      project &&
+      unanalyzedEntries.length > 0 &&
+      !isAnalyzingAll &&
+      !autoAnalyzeTriggered.current
+    ) {
+      autoAnalyzeTriggered.current = true;
+      handleAnalyzeAll();
+    }
+  }, [project, unanalyzedEntries.length, isAnalyzingAll, handleAnalyzeAll]);
+
   if (!project) {
     return (
       <View style={[s.center, { backgroundColor }]}>
@@ -1029,13 +1043,48 @@ export function ProjectDetail() {
         style={{ opacity: 0.5 }}
       >
         {project.redesigns.length}{" "}
-        {project.redesigns.length === 1 ? "redesign" : "redesigns"} · Updated{" "}
-        {new Date(project.updatedAt).toLocaleDateString()}
+        {project.redesigns.length === 1 ? "room" : "rooms"} scanned
+        {project.totalRooms ? ` of ${project.totalRooms}` : ""}
+        {" "}· Updated {new Date(project.updatedAt).toLocaleDateString()}
       </Text>
+      {!project.totalRooms && project.redesigns.length > 0 && (
+        <Pressable
+          onPress={() => {
+            Alert.prompt(
+              "Total Rooms",
+              "How many rooms does this property have?",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Save",
+                  onPress: (val: string | undefined) => {
+                    const n = Number(val);
+                    if (n > 0 && n <= 20) {
+                      updateProjectMeta(project.id, { totalRooms: n });
+                    }
+                  },
+                },
+              ],
+              "plain-text",
+              "",
+              "number-pad"
+            );
+          }}
+        >
+          <Text type="caption" weight="semibold" style={{ color: "#007AFF" }}>
+            Set total rooms for this property
+          </Text>
+        </Pressable>
+      )}
 
       <Button
-        title="Add Redesign"
-        onPress={() => router.push("/(tabs)/camera")}
+        title="Scan a Room"
+        onPress={() =>
+          router.push({
+            pathname: "/(tabs)/camera",
+            params: { saveToProjectId: project.id },
+          })
+        }
         variant="solid"
         size="lg"
         symbol="camera.viewfinder"
@@ -1043,247 +1092,66 @@ export function ProjectDetail() {
         style={s.addButton as any}
       />
 
-      {/* Analyze all unanalyzed rooms */}
-      {unanalyzedEntries.length > 0 && (
+      {/* Auto-analyzing rooms indicator */}
+      {isAnalyzingAll && (
         <View style={s.analyzeAllSection}>
-          {isAnalyzingAll ? (
-            <View style={s.generatingRow}>
-              <ActivityIndicator size="small" />
-              <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.6 }}>
-                {analyzeProgress}
-              </Text>
-            </View>
-          ) : (
-            <Button
-              title={`Analyze ${unanalyzedEntries.length} Unscored ${unanalyzedEntries.length === 1 ? "Room" : "Rooms"}`}
-              onPress={handleAnalyzeAll}
-              variant="solid"
-              size="lg"
-              symbol="sparkle.magnifyingglass"
-            />
-          )}
+          <View style={s.generatingRow}>
+            <ActivityIndicator size="small" />
+            <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.6 }}>
+              {analyzeProgress}
+            </Text>
+          </View>
         </View>
       )}
 
-      {/* ── Dashboard Section ── */}
+      {/* ── Score summary (always visible) ── */}
       {propertyScore && (
-        <>
-          <DashboardScoreCard
-            averageScore={propertyScore.averageScore}
-            roomCount={propertyScore.rooms.length}
-            isDark={isDark}
-          />
-
-          <RoomBreakdownRow
-            rooms={propertyScore.rooms}
-            isDark={isDark}
-            onRoomPress={handleRoomPillPress}
-          />
-
-          {propertyScore.suggestions.length > 0 && (
-            <ActionPlanCard
-              suggestions={propertyScore.suggestions}
-              totalCost={propertyScore.totalEstimatedCost}
-              completedCost={propertyScore.completedCost}
-              completedCount={propertyScore.completedCount}
-              totalCount={propertyScore.totalCount}
-              projectId={project.id}
-              propertyName={project.name}
-              isDark={isDark}
-            />
-          )}
-
-          <ROICard
-            propertyScore={propertyScore}
-            nightlyRate={project.nightlyRate}
-            occupancyPercent={project.occupancyPercent}
-            projectId={project.id}
-            isDark={isDark}
-          />
-        </>
+        <DashboardScoreCard
+          averageScore={propertyScore.averageScore}
+          roomCount={propertyScore.rooms.length}
+          isDark={isDark}
+        />
       )}
 
-      {/* ── Seasonal section ── */}
-      {!project.region || editingMeta ? (
-        <View
-          style={[
-            s.seasonalCard,
-            {
-              backgroundColor: isDark
-                ? "rgba(255,255,255,0.08)"
-                : "rgba(0,0,0,0.04)",
-            },
-          ]}
-        >
-          <Text type="body" weight="bold" lightColor="black" darkColor="white">
-            {editingMeta
-              ? "Edit Location"
-              : "Add Location for Seasonal Tips"}
-          </Text>
-          <Text
-            type="sm"
-            lightColor="black"
-            darkColor="white"
-            style={{ opacity: 0.5 }}
-          >
-            Get personalized recommendations based on your property location and
-            season.
-          </Text>
-          <RegionPicker
-            region={pickerRegion ?? project.region}
-            hemisphere={pickerHemisphere}
-            onRegionChange={setPickerRegion}
-            onHemisphereChange={setPickerHemisphere}
-            isDark={isDark}
-          />
-          <View style={s.metaActions}>
-            <Button
-              title="Save"
-              onPress={handleSaveMeta}
-              variant="solid"
-              size="md"
-              disabled={!pickerRegion}
-            />
-            {editingMeta && (
-              <Pressable onPress={() => setEditingMeta(false)}>
+      {/* ── Tab bar ── */}
+      {propertyScore && (
+        <View style={s.tabBar}>
+          {(["overview", "plan", "insights"] as const).map((tab) => {
+            const label = tab === "overview" ? "Rooms" : tab === "plan" ? "Action Plan" : "Insights";
+            const active = activeTab === tab;
+            return (
+              <Pressable
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                style={[s.tab, active && s.tabActive]}
+              >
                 <Text
                   type="sm"
-                  weight="semibold"
-                  style={{ color: "#007AFF" }}
+                  weight={active ? "bold" : "normal"}
+                  lightColor={active ? "black" : "black"}
+                  darkColor={active ? "white" : "white"}
+                  style={!active ? { opacity: 0.5 } : undefined}
                 >
-                  Cancel
+                  {label}
                 </Text>
               </Pressable>
-            )}
-          </View>
+            );
+          })}
         </View>
-      ) : recommendation ? (
-        <View
-          style={[
-            s.seasonalCard,
-            {
-              backgroundColor: isDark
-                ? "rgba(255,255,255,0.08)"
-                : "rgba(0,0,0,0.04)",
-            },
-          ]}
-        >
-          <View style={s.seasonalHeader}>
-            <Text
-              type="body"
-              weight="bold"
-              lightColor="black"
-              darkColor="white"
-            >
-              {recommendation.seasonLabel}
-            </Text>
-            <Pressable
-              onPress={() => {
-                setPickerRegion(project.region);
-                setPickerHemisphere(project.hemisphere ?? "northern");
-                setEditingMeta(true);
-              }}
-            >
-              <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
-                Edit
-              </Text>
-            </Pressable>
-          </View>
-          <Text
-            type="sm"
-            lightColor="black"
-            darkColor="white"
-            style={{ opacity: 0.5 }}
-          >
-            {REGION_LABELS[project.region!]} · Updated{" "}
-            {new Date(project.updatedAt).toLocaleDateString()}
-          </Text>
-          <View style={s.seasonalTags}>
-            <View
-              style={[
-                s.seasonalTag,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.12)"
-                    : "rgba(0,0,0,0.06)",
-                },
-              ]}
-            >
-              <Text
-                type="caption"
-                lightColor="black"
-                darkColor="white"
-              >
-                {REDESIGN_STYLE_LABELS[recommendation.styles[0]]}
-              </Text>
-            </View>
-            <View
-              style={[
-                s.seasonalTag,
-                {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.12)"
-                    : "rgba(0,0,0,0.06)",
-                },
-              ]}
-            >
-              <Text
-                type="caption"
-                lightColor="black"
-                darkColor="white"
-              >
-                {GUEST_TYPE_LABELS[recommendation.guestType]}
-              </Text>
-            </View>
-          </View>
-          <Text
-            type="sm"
-            lightColor="black"
-            darkColor="white"
-            style={{ opacity: 0.7, lineHeight: 18 }}
-          >
-            {recommendation.tip}
-          </Text>
-          <View style={s.urgencyRow}>
-            <View
-              style={[
-                s.urgencyDot,
-                {
-                  backgroundColor:
-                    recommendation.urgency === "fresh"
-                      ? "#16A34A"
-                      : recommendation.urgency === "due"
-                      ? "#CA8A04"
-                      : "#DC2626",
-                },
-              ]}
-            />
-            <Text
-              type="caption"
-              style={{
-                color:
-                  recommendation.urgency === "fresh"
-                    ? "#16A34A"
-                    : recommendation.urgency === "due"
-                    ? "#CA8A04"
-                    : "#DC2626",
-                flex: 1,
-              }}
-            >
-              {recommendation.urgencyMessage}
-            </Text>
-          </View>
-          <Button
-            title={`Refresh for ${recommendation.seasonLabel}`}
-            onPress={handleRefreshSeasonal}
-            variant="solid"
-            size="md"
-            symbol="camera.viewfinder"
-          />
-        </View>
-      ) : null}
+      )}
 
-      {/* ── Redesign Grid (grouped by room) ── */}
+      {/* ── Tab: Rooms (Overview) ── */}
+      {(!propertyScore || activeTab === "overview") && (
+        <>
+          {propertyScore && (
+            <RoomBreakdownRow
+              rooms={propertyScore.rooms}
+              isDark={isDark}
+              onRoomPress={handleRoomPillPress}
+            />
+          )}
+
+      {/* ── Room grid ── */}
       {project.redesigns.length === 0 ? (
         <View style={s.emptyState}>
           <Text
@@ -1292,7 +1160,7 @@ export function ProjectDetail() {
             darkColor="white"
             style={{ textAlign: "center", opacity: 0.5 }}
           >
-            No redesigns yet. Scan a space to get started.
+            No rooms scanned yet. Scan a space to get started.
           </Text>
         </View>
       ) : roomGroups.length > 0 ? (
@@ -1323,6 +1191,124 @@ export function ProjectDetail() {
           ))}
         </View>
       )}
+        </>
+      )}
+
+      {/* ── Tab: Action Plan ── */}
+      {propertyScore && activeTab === "plan" && (
+        <>
+          {propertyScore.suggestions.length > 0 && (
+            <ActionPlanCard
+              suggestions={propertyScore.suggestions}
+              totalCost={propertyScore.totalEstimatedCost}
+              completedCost={propertyScore.completedCost}
+              completedCount={propertyScore.completedCount}
+              totalCount={propertyScore.totalCount}
+              projectId={project.id}
+              propertyName={project.name}
+              isDark={isDark}
+            />
+          )}
+
+          <ROICard
+            propertyScore={propertyScore}
+            nightlyRate={project.nightlyRate}
+            occupancyPercent={project.occupancyPercent}
+            projectId={project.id}
+            isDark={isDark}
+          />
+        </>
+      )}
+
+      {/* ── Tab: Insights ── */}
+      {propertyScore && activeTab === "insights" && (
+        <>
+          {/* Seasonal section */}
+          {!project.region || editingMeta ? (
+            <View
+              style={[
+                s.seasonalCard,
+                {
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.08)"
+                    : "rgba(0,0,0,0.04)",
+                },
+              ]}
+            >
+              <Text type="body" weight="bold" lightColor="black" darkColor="white">
+                {editingMeta ? "Edit Location" : "Add Location for Seasonal Tips"}
+              </Text>
+              <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+                Get personalized recommendations based on your property location and season.
+              </Text>
+              <RegionPicker
+                region={pickerRegion ?? project.region}
+                hemisphere={pickerHemisphere}
+                onRegionChange={setPickerRegion}
+                onHemisphereChange={setPickerHemisphere}
+                isDark={isDark}
+              />
+              <View style={s.metaActions}>
+                <Button title="Save" onPress={handleSaveMeta} variant="solid" size="md" disabled={!pickerRegion} />
+                {editingMeta && (
+                  <Pressable onPress={() => setEditingMeta(false)}>
+                    <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>Cancel</Text>
+                  </Pressable>
+                )}
+              </View>
+            </View>
+          ) : recommendation ? (
+            <View
+              style={[
+                s.seasonalCard,
+                { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" },
+              ]}
+            >
+              <View style={s.seasonalHeader}>
+                <Text type="body" weight="bold" lightColor="black" darkColor="white">
+                  {recommendation.seasonLabel}
+                </Text>
+                <Pressable onPress={() => { setPickerRegion(project.region); setPickerHemisphere(project.hemisphere ?? "northern"); setEditingMeta(true); }}>
+                  <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>Edit</Text>
+                </Pressable>
+              </View>
+              <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+                {REGION_LABELS[project.region!]} · Updated {new Date(project.updatedAt).toLocaleDateString()}
+              </Text>
+              <View style={s.seasonalTags}>
+                <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
+                  <Text type="caption" lightColor="black" darkColor="white">{REDESIGN_STYLE_LABELS[recommendation.styles[0]]}</Text>
+                </View>
+                <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
+                  <Text type="caption" lightColor="black" darkColor="white">{GUEST_TYPE_LABELS[recommendation.guestType]}</Text>
+                </View>
+              </View>
+              <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.7, lineHeight: 18 }}>
+                {recommendation.tip}
+              </Text>
+              <View style={s.urgencyRow}>
+                <View style={[s.urgencyDot, { backgroundColor: recommendation.urgency === "fresh" ? "#16A34A" : recommendation.urgency === "due" ? "#CA8A04" : "#DC2626" }]} />
+                <Text type="caption" style={{ color: recommendation.urgency === "fresh" ? "#16A34A" : recommendation.urgency === "due" ? "#CA8A04" : "#DC2626", flex: 1 }}>
+                  {recommendation.urgencyMessage}
+                </Text>
+              </View>
+              <Button title={`Refresh for ${recommendation.seasonLabel}`} onPress={handleRefreshSeasonal} variant="solid" size="md" symbol="camera.viewfinder" />
+            </View>
+          ) : null}
+
+          {/* Listing texts overview */}
+          {project.redesigns.filter((r) => r.listingText).length > 0 && (
+            <View style={[s.dashboardCard, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" }]}>
+              <Text type="body" weight="bold" lightColor="black" darkColor="white">
+                Listing Descriptions
+              </Text>
+              <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+                {project.redesigns.filter((r) => r.listingText).length} of {project.redesigns.length} rooms have descriptions
+              </Text>
+            </View>
+          )}
+        </>
+      )}
 
       <Pressable onPress={handleDelete} style={s.deleteButton}>
         <Text type="sm" weight="semibold" style={{ color: "#DC2626" }}>
@@ -1350,6 +1336,22 @@ const s = StyleSheet.create({
   },
   addButton: {
     marginTop: SPACING.MD,
+  },
+  // Tab bar
+  tabBar: {
+    flexDirection: "row",
+    marginTop: SPACING.SM,
+    borderRadius: BORDER_RADIUS.MD,
+    overflow: "hidden",
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
   },
   // Analyze all
   analyzeAllSection: {

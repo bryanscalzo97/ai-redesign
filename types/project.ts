@@ -25,4 +25,5 @@ export interface Project {
   checkedSuggestions?: string[];
   nightlyRate?: number;
   occupancyPercent?: number;
+  totalRooms?: number;
 }

@@ -82,9 +82,9 @@ function ProjectCard({
                 {
                   backgroundColor:
                     avgScore < 4
-                      ? "#EF4444"
+                      ? "#6366F1"
                       : avgScore <= 7
-                      ? "#EAB308"
+                      ? "#F59E0B"
                       : "#22C55E",
                 },
               ]}
@@ -124,7 +124,7 @@ function ProjectCard({
           darkColor="white"
           style={{ opacity: 0.5 }}
         >
-          {count} {count === 1 ? "redesign" : "redesigns"} · {date}
+          {count} {count === 1 ? "room" : "rooms"} scanned · {date}
         </Text>
       </View>
     </Pressable>

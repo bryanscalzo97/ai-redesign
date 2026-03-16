@@ -45,6 +45,7 @@ export interface ProjectContextValue {
       hemisphere?: Project["hemisphere"];
       nightlyRate?: number;
       occupancyPercent?: number;
+      totalRooms?: number;
     }
   ) => Promise<void>;
   toggleSuggestionChecked: (

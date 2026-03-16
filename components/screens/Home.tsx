@@ -40,8 +40,8 @@ const CARD_HEIGHT = 220;
 const RECENT_SIZE = 120;
 
 function scoreColor(score: number): string {
-  if (score < 4) return "#EF4444";
-  if (score <= 7) return "#EAB308";
+  if (score < 4) return "#6366F1";
+  if (score <= 7) return "#F59E0B";
   return "#22C55E";
 }
 
@@ -175,35 +175,40 @@ function WelcomeGuide({
 }
 
 // ─── Portfolio Dashboard ────────────────────────────────────────────────────
+function formatCompact(n: number): string {
+  if (n >= 10000) return `$${(n / 1000).toFixed(1)}K`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
+  return `$${n}`;
+}
+
+function pluralize(n: number, singular: string, plural: string): string {
+  return `${n} ${n === 1 ? singular : plural}`;
+}
+
 function PortfolioDashboard({
   summary,
   isDark,
   onPropertyPress,
+  onSeeAll,
 }: {
   summary: PortfolioSummary;
   isDark: boolean;
   onPropertyPress: (id: string) => void;
+  onSeeAll: () => void;
 }) {
   const cardBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+  const PROPERTY_CARD_WIDTH = 140;
 
   return (
     <View style={s.portfolioSection}>
-      {/* Overall stats card */}
+      {/* Compact stats row */}
       <View style={[s.portfolioCard, { backgroundColor: cardBg }]}>
-        <Text type="lg" weight="bold" lightColor="black" darkColor="white">
-          Portfolio Overview
-        </Text>
-
         <View style={s.portfolioStats}>
           <View style={s.portfolioStat}>
             <Text
-              type="title"
+              type="xl"
               weight="bold"
-              style={{
-                color: scoreColor(summary.overallAverageScore),
-                fontSize: 32,
-                lineHeight: 38,
-              }}
+              style={{ color: scoreColor(summary.overallAverageScore) }}
             >
               {summary.overallAverageScore.toFixed(1)}
             </Text>
@@ -212,25 +217,15 @@ function PortfolioDashboard({
             </Text>
           </View>
           <View style={s.portfolioStat}>
-            <Text
-              type="title"
-              weight="bold"
-              lightColor="black"
-              darkColor="white"
-              style={{ fontSize: 32, lineHeight: 38 }}
-            >
+            <Text type="xl" weight="bold" lightColor="black" darkColor="white">
               {summary.scannedProperties}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              Scanned
+              Properties
             </Text>
           </View>
           <View style={s.portfolioStat}>
-            <Text
-              type="title"
-              weight="bold"
-              style={{ color: "#EAB308", fontSize: 32, lineHeight: 38 }}
-            >
+            <Text type="xl" weight="bold" lightColor="black" darkColor="white">
               {summary.totalPendingActions}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
@@ -238,14 +233,8 @@ function PortfolioDashboard({
             </Text>
           </View>
           <View style={s.portfolioStat}>
-            <Text
-              type="title"
-              weight="bold"
-              lightColor="black"
-              darkColor="white"
-              style={{ fontSize: 32, lineHeight: 38 }}
-            >
-              ${summary.totalPendingCost}
+            <Text type="xl" weight="bold" lightColor="black" darkColor="white">
+              {formatCompact(summary.totalPendingCost)}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
               To Invest
@@ -254,45 +243,44 @@ function PortfolioDashboard({
         </View>
       </View>
 
-      {/* Property ranking */}
-      <Text
-        type="body"
-        weight="bold"
-        lightColor="black"
-        darkColor="white"
-        style={{ paddingHorizontal: SPACING.MD }}
-      >
-        Properties by Score
-      </Text>
+      {/* Horizontal property cards */}
+      <View style={s.sectionHeader}>
+        <Text type="body" weight="bold" lightColor="black" darkColor="white">
+          Your Properties
+        </Text>
+        <Pressable onPress={onSeeAll}>
+          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+            See all
+          </Text>
+        </Pressable>
+      </View>
 
-      {summary.properties.map(({ project, score }, index) => {
-        const isWorst = index === 0;
-        return (
-          <Pressable
-            key={project.id}
-            onPress={() => onPropertyPress(project.id)}
-            style={[
-              s.propertyRankRow,
-              {
-                backgroundColor: isWorst
-                  ? isDark
-                    ? "rgba(239,68,68,0.12)"
-                    : "rgba(239,68,68,0.06)"
-                  : cardBg,
-              },
-            ]}
-          >
-            <View
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={s.carousel}
+      >
+        {summary.properties.map(({ project, score }, index) => {
+          const pending = score.totalCount - score.completedCount;
+          return (
+            <Pressable
+              key={project.id}
+              onPress={() => onPropertyPress(project.id)}
               style={[
-                s.rankBadge,
-                { backgroundColor: scoreColor(score.averageScore) },
+                s.propertyCard,
+                { width: PROPERTY_CARD_WIDTH, backgroundColor: cardBg },
               ]}
             >
-              <Text type="sm" weight="bold" style={{ color: "#fff" }}>
-                {score.averageScore.toFixed(1)}
-              </Text>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
+              <View
+                style={[
+                  s.propertyCardScore,
+                  { backgroundColor: scoreColor(score.averageScore) },
+                ]}
+              >
+                <Text type="sm" weight="bold" style={{ color: "#fff" }}>
+                  {score.averageScore.toFixed(1)}
+                </Text>
+              </View>
               <Text
                 type="sm"
                 weight="semibold"
@@ -303,19 +291,24 @@ function PortfolioDashboard({
                 {project.name}
               </Text>
               <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-                {score.rooms.length} rooms · {score.totalCount - score.completedCount} actions pending
+                {pluralize(score.rooms.length, "room", "rooms")}
               </Text>
-            </View>
-            {isWorst && (
-              <View style={s.startHereBadge}>
-                <Text type="caption" weight="bold" style={{ color: "#EF4444" }}>
-                  Start here
+              {pending > 0 && (
+                <Text type="caption" style={{ color: "#6366F1" }}>
+                  {pending} to do
                 </Text>
-              </View>
-            )}
-          </Pressable>
-        );
-      })}
+              )}
+              {index === 0 && summary.properties.length > 1 && (
+                <View style={s.mostPotentialBadge}>
+                  <Text type="caption" weight="bold" style={{ color: "#6366F1", fontSize: 10 }}>
+                    Most potential
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {summary.totalProperties > summary.scannedProperties && (
         <Text
@@ -442,24 +435,39 @@ export function Home() {
           summary={portfolio}
           isDark={isDark}
           onPropertyPress={handlePropertyPress}
+          onSeeAll={() => router.push("/(tabs)/redesigns")}
         />
       )}
 
-      {/* Hero CTA (only when user has projects) */}
-      {projects.length > 0 && (
+      {/* Contextual CTA */}
+      {projects.length > 0 && portfolio.worstProperty && (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: "/(tabs)/redesigns/project-detail",
+              params: { id: portfolio.worstProperty!.id },
+            })
+          }
+          style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
+        >
+          <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
+            Improve {portfolio.worstProperty.name}
+          </Text>
+          <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
+            This property has the most room for improvement
+          </Text>
+        </Pressable>
+      )}
+      {projects.length > 0 && !portfolio.worstProperty && (
         <Pressable
           onPress={() => router.push("/(tabs)/camera")}
           style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
         >
           <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-            {portfolio.scannedProperties > 0
-              ? "Scan Another Space"
-              : "Boost Your Bookings"}
+            Scan Your First Room
           </Text>
           <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-            {portfolio.scannedProperties > 0
-              ? "Add more rooms to improve your portfolio score"
-              : "Scan your space and optimize it for more bookings"}
+            Get AI-powered scores and improvement suggestions
           </Text>
         </Pressable>
       )}
@@ -700,7 +708,6 @@ const s = StyleSheet.create({
     marginHorizontal: SPACING.MD,
     borderRadius: BORDER_RADIUS.LG,
     padding: SPACING.MD,
-    gap: SPACING.SM,
   },
   portfolioStats: {
     flexDirection: "row",
@@ -710,25 +717,25 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 2,
   },
-  propertyRankRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.SM,
-    marginHorizontal: SPACING.MD,
-    padding: SPACING.SM,
+  propertyCard: {
     borderRadius: BORDER_RADIUS.MD,
+    padding: SPACING.SM,
+    gap: 4,
   },
-  rankBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  propertyCardScore: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: 4,
   },
-  startHereBadge: {
-    backgroundColor: "rgba(239,68,68,0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  mostPotentialBadge: {
+    backgroundColor: "rgba(99,102,241,0.12)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: BORDER_RADIUS.FULL,
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
 });

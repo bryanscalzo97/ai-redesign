@@ -28,6 +28,7 @@ import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -120,6 +121,30 @@ export function CameraCapture() {
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
   const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
   const budgetLevels = Object.keys(BUDGET_LEVEL_LABELS) as BudgetLevel[];
+
+  // Reset to camera when tab regains focus (if scan is done)
+  const navigation = useNavigation();
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("focus", () => {
+      if (savedToProject || step === "result") {
+        setCapturedUri(null);
+        setImageBase64(null);
+        setRoomType((params.prefillRoom as RoomType) || null);
+        setStyle((params.prefillStyle as RedesignStyle) || null);
+        setGuestType((params.prefillGuest as GuestType) || null);
+        setBudgetLevel(null);
+        setListingText(null);
+        setSavedToProject(false);
+        setProgressMessage(null);
+        setSavedProjectId(null);
+        setScanNudge(null);
+        autoSaveTriggered.current = false;
+        reset();
+        setStep("camera");
+      }
+    });
+    return unsubscribe;
+  }, [navigation, savedToProject, step, reset, params]);
 
   // Watch generation state to transition steps
   useEffect(() => {
@@ -538,9 +563,9 @@ export function CameraCapture() {
                       style={{
                         color:
                           roomAnalysis.score < 4
-                            ? "#EF4444"
+                            ? "#6366F1"
                             : roomAnalysis.score <= 7
-                            ? "#EAB308"
+                            ? "#F59E0B"
                             : "#22C55E",
                       }}
                     >
@@ -563,9 +588,9 @@ export function CameraCapture() {
                           style={{
                             color:
                               roomAnalysis.afterScore < 4
-                                ? "#EF4444"
+                                ? "#6366F1"
                                 : roomAnalysis.afterScore <= 7
-                                ? "#EAB308"
+                                ? "#F59E0B"
                                 : "#22C55E",
                           }}
                         >
@@ -928,7 +953,7 @@ export function CameraCapture() {
           {/* Generate or Sign In */}
           {isAuthenticated ? (
             <Button
-              title="Generate Redesign"
+              title="Transform Space"
               onPress={handleGenerate}
               disabled={!canGenerate}
               variant="solid"
