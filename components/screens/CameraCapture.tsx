@@ -18,9 +18,11 @@ import {
   type RedesignStyle,
   type RoomType,
 } from "@/types/redesign";
+import { HOST_INSIGHTS } from "@/constants/host-insights";
 import { AuthContext } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
+import { getRoomHistory, computeProgress } from "@/lib/progress-tracking";
 import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -109,6 +111,7 @@ export function CameraCapture() {
   const [isGeneratingText, setIsGeneratingText] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [savedToProject, setSavedToProject] = useState(false);
+  const [progressMessage, setProgressMessage] = useState<string | null>(null);
 
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
@@ -226,6 +229,7 @@ export function CameraCapture() {
           roomType,
           style,
           guestType: guestType ?? undefined,
+          image_base64: generatedImage ?? undefined,
         }),
       });
       const data = await response.json();
@@ -239,7 +243,7 @@ export function CameraCapture() {
     } finally {
       setIsGeneratingText(false);
     }
-  }, [roomType, style, guestType]);
+  }, [roomType, style, guestType, generatedImage]);
 
   const handleShareText = useCallback(() => {
     if (listingText) {
@@ -289,6 +293,9 @@ export function CameraCapture() {
       if (!imageBase64 || !generatedImage || !roomType || !style) return;
       setIsSaving(true);
       try {
+        // Check for existing scans of same room type before saving
+        const existingProject = projects.find((p) => p.id === projectId);
+
         await addRedesignToProject(projectId, {
           roomType,
           style,
@@ -300,6 +307,22 @@ export function CameraCapture() {
           roomAnalysis: roomAnalysis ?? undefined,
         });
         setSavedToProject(true);
+
+        // Show progress message if same room was scanned before
+        if (existingProject && roomAnalysis) {
+          const history = getRoomHistory(existingProject, roomType);
+          if (history.length > 0) {
+            const prevScore = history[history.length - 1].roomAnalysis!.score;
+            const newScore = roomAnalysis.score;
+            const roomLabel =
+              (ROOM_TYPE_LABELS as Record<string, string>)[roomType] || roomType;
+            if (newScore !== prevScore) {
+              setProgressMessage(
+                `${roomLabel} ${newScore > prevScore ? "improved" : "changed"}: ${prevScore.toFixed(1)} → ${newScore.toFixed(1)}`
+              );
+            }
+          }
+        }
       } catch (err) {
         Alert.alert("Error", "Failed to save redesign");
       } finally {
@@ -316,6 +339,7 @@ export function CameraCapture() {
       listingText,
       roomAnalysis,
       addRedesignToProject,
+      projects,
     ]
   );
 
@@ -382,6 +406,11 @@ export function CameraCapture() {
                 <Text type="sm" weight="semibold" style={{ color: "#16A34A" }}>
                   Saved to property
                 </Text>
+                {progressMessage && (
+                  <Text type="sm" weight="semibold" style={{ color: "#22C55E", marginTop: 4 }}>
+                    {progressMessage}
+                  </Text>
+                )}
               </View>
             ) : (
               <Button
@@ -399,6 +428,9 @@ export function CameraCapture() {
           <View style={s.analysisSection}>
             <Text type="lg" weight="bold" lightColor="white" darkColor="white">
               Your Room Analysis
+            </Text>
+            <Text type="caption" style={{ color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+              💡 {HOST_INSIGHTS.score}
             </Text>
 
             {isAnalyzing ? (
@@ -540,6 +572,9 @@ export function CameraCapture() {
           <View style={s.listingTextSection}>
             <Text type="lg" weight="bold" lightColor="white" darkColor="white">
               Listing Description
+            </Text>
+            <Text type="caption" style={{ color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
+              💡 {HOST_INSIGHTS.description}
             </Text>
 
             {listingText ? (

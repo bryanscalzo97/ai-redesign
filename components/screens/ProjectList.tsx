@@ -5,6 +5,7 @@ import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";
 import { getSeasonalRecommendation } from "@/lib/seasonal-engine";
+import { computePropertyScore } from "@/lib/project-score";
 import type { Project } from "@/types/project";
 import type { Urgency } from "@/types/seasonal";
 import { Image } from "expo-image";
@@ -53,6 +54,11 @@ function ProjectCard({
     ).urgency;
   }, [project.region, project.hemisphere, project.updatedAt]);
 
+  const avgScore = useMemo(() => {
+    const ps = computePropertyScore(project);
+    return ps?.averageScore ?? null;
+  }, [project]);
+
   return (
     <Pressable
       onPress={onPress}
@@ -62,12 +68,33 @@ function ProjectCard({
       ]}
     >
       {project.coverImagePath ? (
-        <Image
-          source={{ uri: project.coverImagePath }}
-          style={s.cardImage}
-          contentFit="cover"
-          transition={600}
-        />
+        <View>
+          <Image
+            source={{ uri: project.coverImagePath }}
+            style={s.cardImage}
+            contentFit="cover"
+            transition={600}
+          />
+          {avgScore !== null && (
+            <View
+              style={[
+                s.scoreBadge,
+                {
+                  backgroundColor:
+                    avgScore < 4
+                      ? "#EF4444"
+                      : avgScore <= 7
+                      ? "#EAB308"
+                      : "#22C55E",
+                },
+              ]}
+            >
+              <Text type="caption" weight="bold" style={{ color: "#fff" }}>
+                {avgScore.toFixed(1)}
+              </Text>
+            </View>
+          )}
+        </View>
       ) : (
         <View style={[s.cardImage, s.cardPlaceholder]}>
           <Text type="lg" style={{ opacity: 0.3 }}>
@@ -262,6 +289,14 @@ const s = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+  },
+  scoreBadge: {
+    position: "absolute" as const,
+    top: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: BORDER_RADIUS.FULL,
   },
   empty: {
     flex: 1,

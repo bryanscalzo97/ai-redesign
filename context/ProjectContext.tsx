@@ -42,6 +42,10 @@ export interface ProjectContextValue {
     projectId: string,
     meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
   ) => Promise<void>;
+  toggleSuggestionChecked: (
+    projectId: string,
+    suggestionKey: string
+  ) => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContextValue>({
@@ -54,6 +58,7 @@ export const ProjectContext = createContext<ProjectContextValue>({
   updateRedesignListingText: async () => {},
   deleteRedesign: async () => {},
   updateProjectMeta: async () => {},
+  toggleSuggestionChecked: async () => {},
 });
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
@@ -140,6 +145,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [refreshProjects]
   );
 
+  const toggleSuggestionChecked = useCallback(
+    async (projectId: string, suggestionKey: string) => {
+      await ProjectStorage.toggleSuggestionChecked(projectId, suggestionKey);
+      await refreshProjects();
+    },
+    [refreshProjects]
+  );
+
   return (
     <ProjectContext.Provider
       value={{
@@ -152,6 +165,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         updateRedesignListingText,
         deleteRedesign,
         updateProjectMeta,
+        toggleSuggestionChecked,
       }}
     >
       {children}

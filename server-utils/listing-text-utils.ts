@@ -1,11 +1,16 @@
 export function buildListingTextPrompt(
   roomType: string,
   style: string,
-  guestType?: string
+  guestType?: string,
+  hasImage?: boolean
 ): string {
   const target = guestType || "general travelers";
 
-  return `Write a compelling Airbnb/VRBO listing description for a ${roomType} styled as "${style}".
+  const imageInstruction = hasImage
+    ? `An image of the redesigned space is attached. Describe what you actually see — the specific furniture, colors, textures, and ambiance. Do not make up features that are not visible.\n\n`
+    : "";
+
+  return `${imageInstruction}Write a compelling Airbnb/VRBO listing description for a ${roomType} styled as "${style}".
 Target guest: ${target}.
 
 Include:

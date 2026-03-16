@@ -22,4 +22,5 @@ export interface Project {
   redesigns: RedesignEntry[];
   region?: import("./seasonal").PropertyRegion;
   hemisphere?: import("./seasonal").Hemisphere;
+  checkedSuggestions?: string[];
 }

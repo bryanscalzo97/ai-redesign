@@ -207,6 +207,25 @@ export async function updateRedesignListingText(
   await saveProject(project);
 }
 
+export async function toggleSuggestionChecked(
+  projectId: string,
+  suggestionKey: string
+): Promise<void> {
+  const project = await getProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const checked = project.checkedSuggestions ?? [];
+  const index = checked.indexOf(suggestionKey);
+  if (index === -1) {
+    checked.push(suggestionKey);
+  } else {
+    checked.splice(index, 1);
+  }
+  project.checkedSuggestions = checked;
+  project.updatedAt = new Date().toISOString();
+  await saveProject(project);
+}
+
 export async function deleteRedesign(
   projectId: string,
   redesignId: string
