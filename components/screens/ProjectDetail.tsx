@@ -1,10 +1,18 @@
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { RegionPicker } from "@/components/RegionPicker";
 import { Button } from "@/components/ui/Button";
+import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { HOST_INSIGHTS } from "@/constants/host-insights";
 import { REGION_LABELS } from "@/constants/seasonal-tips";
+import {
+  surface,
+  accent,
+  getScoreCategory,
+  getScoreLabel,
+  textMuted,
+} from "@/constants/semanticColors";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";
@@ -59,23 +67,24 @@ async function readFileAsBase64(uri: string): Promise<string> {
 }
 
 function scoreColor(score: number): string {
-  if (score < 4) return "#6366F1"; // indigo — "high potential"
-  if (score <= 7) return "#F59E0B"; // amber — "good"
-  return "#22C55E"; // green — "optimized"
-}
-
-function scoreLabel(score: number): string {
-  if (score < 4) return "High potential";
-  if (score <= 7) return "Good";
-  return "Optimized";
+  return getScoreCategory(score).bg;
 }
 
 // ─── Insight Banner ─────────────────────────────────────────────────────────
-function InsightBanner({ text }: { text: string }) {
+function InsightBanner({ text, isDark }: { text: string; isDark: boolean }) {
   return (
-    <View style={s.insightBanner}>
-      <Text type="caption" style={s.insightText}>
-        💡 {text}
+    <View
+      style={[
+        s.insightBanner,
+        {
+          backgroundColor: isDark
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.03)",
+        },
+      ]}
+    >
+      <Text type="caption" weight="medium" style={{ color: isDark ? textMuted.dark : textMuted.light }}>
+        {text}
       </Text>
     </View>
   );
@@ -90,7 +99,7 @@ function RedesignCard({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress}>
+    <ScalePress onPress={onPress}>
       <View>
         <Image
           source={{ uri: entry.afterImagePath }}
@@ -123,7 +132,7 @@ function RedesignCard({
         {(REDESIGN_STYLE_LABELS as any)[entry.style] || entry.style} ·{" "}
         {(ROOM_TYPE_LABELS as any)[entry.roomType] || entry.roomType}
       </Text>
-    </Pressable>
+    </ScalePress>
   );
 }
 
@@ -292,7 +301,7 @@ function RedesignExpandedView({
 
       {/* Listing text section */}
       <View style={s.textSection}>
-        <InsightBanner text={HOST_INSIGHTS.description} />
+        <InsightBanner text={HOST_INSIGHTS.description} isDark={isDark} />
         {listingText ? (
           <>
             <View style={s.textHeader}>
@@ -308,7 +317,7 @@ function RedesignExpandedView({
                 <Text
                   type="sm"
                   weight="semibold"
-                  style={{ color: "#007AFF" }}
+                  style={{ color: isDark ? accent.dark : accent.light }}
                 >
                   Share
                 </Text>
@@ -387,33 +396,30 @@ function DashboardScoreCard({
       style={[
         s.dashboardCard,
         {
-          backgroundColor: isDark
-            ? "rgba(255,255,255,0.08)"
-            : "rgba(0,0,0,0.04)",
+          backgroundColor: isDark ? surface.dark : surface.light,
         },
       ]}
     >
-      <InsightBanner text={HOST_INSIGHTS.score} />
+      <InsightBanner text={HOST_INSIGHTS.score} isDark={isDark} />
       <View style={s.scoreCenter}>
         <Text
-          type="title"
+          type="5xl"
           weight="bold"
-          style={{ color: scoreColor(averageScore), fontSize: 48, lineHeight: 56 }}
+          variant="serif"
+          style={{ color: scoreColor(averageScore) }}
         >
           {averageScore.toFixed(1)}
         </Text>
         <Text
-          type="body"
+          type="sm"
           weight="semibold"
           style={{ color: scoreColor(averageScore) }}
         >
-          {scoreLabel(averageScore)}
+          {getScoreLabel(averageScore)}
         </Text>
         <Text
           type="caption"
-          lightColor="black"
-          darkColor="white"
-          style={{ opacity: 0.5 }}
+          style={{ color: isDark ? textMuted.dark : textMuted.light }}
         >
           Based on {roomCount} {roomCount === 1 ? "room" : "rooms"} scanned
         </Text>
@@ -579,9 +585,7 @@ function ROICard({
       style={[
         s.dashboardCard,
         {
-          backgroundColor: isDark
-            ? "rgba(255,255,255,0.08)"
-            : "rgba(0,0,0,0.04)",
+          backgroundColor: isDark ? surface.dark : surface.light,
         },
       ]}
     >
@@ -597,7 +601,7 @@ function ROICard({
           <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
             Rate
           </Text>
-          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+          <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
             {nightlyRate ? `$${nightlyRate}/night` : "Set"}
           </Text>
         </Pressable>
@@ -605,7 +609,7 @@ function ROICard({
           <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
             Occupancy
           </Text>
-          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+          <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
             {occupancyPercent ? `${occupancyPercent}%` : "50%"}
           </Text>
         </Pressable>
@@ -716,19 +720,17 @@ function ActionPlanCard({
       style={[
         s.dashboardCard,
         {
-          backgroundColor: isDark
-            ? "rgba(255,255,255,0.08)"
-            : "rgba(0,0,0,0.04)",
+          backgroundColor: isDark ? surface.dark : surface.light,
         },
       ]}
     >
-      <InsightBanner text={HOST_INSIGHTS.actionPlan} />
+      <InsightBanner text={HOST_INSIGHTS.actionPlan} isDark={isDark} />
       <View style={s.actionPlanHeader}>
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
           Action Plan
         </Text>
         <Pressable onPress={handleExport}>
-          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+          <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
             Share
           </Text>
         </Pressable>
@@ -1071,7 +1073,7 @@ export function ProjectDetail() {
             );
           }}
         >
-          <Text type="caption" weight="semibold" style={{ color: "#007AFF" }}>
+          <Text type="caption" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
             Set total rooms for this property
           </Text>
         </Pressable>
@@ -1113,9 +1115,14 @@ export function ProjectDetail() {
         />
       )}
 
-      {/* ── Tab bar ── */}
+      {/* ── Segmented control ── */}
       {propertyScore && (
-        <View style={s.tabBar}>
+        <View
+          style={[
+            s.segmentedControl,
+            { backgroundColor: isDark ? surface.dark : surface.light },
+          ]}
+        >
           {(["overview", "plan", "insights"] as const).map((tab) => {
             const label = tab === "overview" ? "Rooms" : tab === "plan" ? "Action Plan" : "Insights";
             const active = activeTab === tab;
@@ -1123,14 +1130,22 @@ export function ProjectDetail() {
               <Pressable
                 key={tab}
                 onPress={() => setActiveTab(tab)}
-                style={[s.tab, active && s.tabActive]}
+                style={[
+                  s.segment,
+                  active && {
+                    backgroundColor: isDark ? "#fff" : "#000",
+                    borderRadius: BORDER_RADIUS.SM,
+                  },
+                ]}
               >
                 <Text
                   type="sm"
-                  weight={active ? "bold" : "normal"}
-                  lightColor={active ? "black" : "black"}
-                  darkColor={active ? "white" : "white"}
-                  style={!active ? { opacity: 0.5 } : undefined}
+                  weight={active ? "semibold" : "normal"}
+                  style={{
+                    color: active
+                      ? isDark ? "#000" : "#fff"
+                      : isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
+                  }}
                 >
                   {label}
                 </Text>
@@ -1229,9 +1244,7 @@ export function ProjectDetail() {
               style={[
                 s.seasonalCard,
                 {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.08)"
-                    : "rgba(0,0,0,0.04)",
+                  backgroundColor: isDark ? surface.dark : surface.light,
                 },
               ]}
             >
@@ -1252,7 +1265,7 @@ export function ProjectDetail() {
                 <Button title="Save" onPress={handleSaveMeta} variant="solid" size="md" disabled={!pickerRegion} />
                 {editingMeta && (
                   <Pressable onPress={() => setEditingMeta(false)}>
-                    <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>Cancel</Text>
+                    <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>Cancel</Text>
                   </Pressable>
                 )}
               </View>
@@ -1261,7 +1274,7 @@ export function ProjectDetail() {
             <View
               style={[
                 s.seasonalCard,
-                { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" },
+                { backgroundColor: isDark ? surface.dark : surface.light },
               ]}
             >
               <View style={s.seasonalHeader}>
@@ -1269,7 +1282,7 @@ export function ProjectDetail() {
                   {recommendation.seasonLabel}
                 </Text>
                 <Pressable onPress={() => { setPickerRegion(project.region); setPickerHemisphere(project.hemisphere ?? "northern"); setEditingMeta(true); }}>
-                  <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>Edit</Text>
+                  <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>Edit</Text>
                 </Pressable>
               </View>
               <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
@@ -1298,7 +1311,7 @@ export function ProjectDetail() {
 
           {/* Listing texts overview */}
           {project.redesigns.filter((r) => r.listingText).length > 0 && (
-            <View style={[s.dashboardCard, { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" }]}>
+            <View style={[s.dashboardCard, { backgroundColor: isDark ? surface.dark : surface.light }]}>
               <Text type="body" weight="bold" lightColor="black" darkColor="white">
                 Listing Descriptions
               </Text>
@@ -1337,21 +1350,18 @@ const s = StyleSheet.create({
   addButton: {
     marginTop: SPACING.MD,
   },
-  // Tab bar
-  tabBar: {
+  // Segmented control
+  segmentedControl: {
     flexDirection: "row",
     marginTop: SPACING.SM,
     borderRadius: BORDER_RADIUS.MD,
-    overflow: "hidden",
+    padding: 3,
   },
-  tab: {
+  segment: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: SPACING.SM,
     alignItems: "center",
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: "#007AFF",
+    borderRadius: BORDER_RADIUS.SM - 2,
   },
   // Analyze all
   analyzeAllSection: {
@@ -1436,11 +1446,9 @@ const s = StyleSheet.create({
   },
   // Insight
   insightBanner: {
-    paddingVertical: 4,
-  },
-  insightText: {
-    color: "#9CA3AF",
-    fontStyle: "italic",
+    paddingVertical: SPACING.SM,
+    paddingHorizontal: SPACING.SM,
+    borderRadius: BORDER_RADIUS.SM,
   },
   // Room groups
   groupedSection: {

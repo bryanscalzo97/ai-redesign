@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/Button";
+import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { surface, getScoreCategory } from "@/constants/semanticColors";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";
@@ -60,11 +62,11 @@ function ProjectCard({
   }, [project]);
 
   return (
-    <Pressable
+    <ScalePress
       onPress={onPress}
       style={[
         s.card,
-        { backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)" },
+        { backgroundColor: isDark ? surface.dark : surface.light },
       ]}
     >
       {project.coverImagePath ? (
@@ -80,12 +82,7 @@ function ProjectCard({
               style={[
                 s.scoreBadge,
                 {
-                  backgroundColor:
-                    avgScore < 4
-                      ? "#6366F1"
-                      : avgScore <= 7
-                      ? "#F59E0B"
-                      : "#22C55E",
+                  backgroundColor: getScoreCategory(avgScore).bg,
                 },
               ]}
             >
@@ -127,7 +124,7 @@ function ProjectCard({
           {count} {count === 1 ? "room" : "rooms"} scanned · {date}
         </Text>
       </View>
-    </Pressable>
+    </ScalePress>
   );
 }
 

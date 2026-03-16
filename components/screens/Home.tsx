@@ -1,7 +1,9 @@
 import { SeasonalBanner } from "@/components/SeasonalBanner";
 import { Button } from "@/components/ui/Button";
+import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { surface, getScoreCategory } from "@/constants/semanticColors";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AuthContext } from "@/context/AuthContext";
@@ -40,9 +42,7 @@ const CARD_HEIGHT = 220;
 const RECENT_SIZE = 120;
 
 function scoreColor(score: number): string {
-  if (score < 4) return "#6366F1";
-  if (score <= 7) return "#F59E0B";
-  return "#22C55E";
+  return getScoreCategory(score).bg;
 }
 
 const STYLE_IMAGES: Partial<Record<RedesignStyle, string>> = {
@@ -123,7 +123,7 @@ function WelcomeGuide({
   isDark: boolean;
   onGetStarted: () => void;
 }) {
-  const cardBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+  const cardBg = isDark ? surface.dark : surface.light;
 
   const steps = [
     { num: "1", label: "Name your property", desc: "Create your first listing" },
@@ -196,7 +196,7 @@ function PortfolioDashboard({
   onPropertyPress: (id: string) => void;
   onSeeAll: () => void;
 }) {
-  const cardBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+  const cardBg = isDark ? surface.dark : surface.light;
   const PROPERTY_CARD_WIDTH = 140;
 
   return (
@@ -263,7 +263,7 @@ function PortfolioDashboard({
         {summary.properties.map(({ project, score }, index) => {
           const pending = score.totalCount - score.completedCount;
           return (
-            <Pressable
+            <ScalePress
               key={project.id}
               onPress={() => onPropertyPress(project.id)}
               style={[
@@ -305,7 +305,7 @@ function PortfolioDashboard({
                   </Text>
                 </View>
               )}
-            </Pressable>
+            </ScalePress>
           );
         })}
       </ScrollView>
@@ -441,7 +441,7 @@ export function Home() {
 
       {/* Contextual CTA */}
       {projects.length > 0 && portfolio.worstProperty && (
-        <Pressable
+        <ScalePress
           onPress={() =>
             router.push({
               pathname: "/(tabs)/redesigns/project-detail",
@@ -456,10 +456,10 @@ export function Home() {
           <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
             This property has the most room for improvement
           </Text>
-        </Pressable>
+        </ScalePress>
       )}
       {projects.length > 0 && !portfolio.worstProperty && (
-        <Pressable
+        <ScalePress
           onPress={() => router.push("/(tabs)/camera")}
           style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
         >
@@ -469,7 +469,7 @@ export function Home() {
           <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
             Get AI-powered scores and improvement suggestions
           </Text>
-        </Pressable>
+        </ScalePress>
       )}
 
       {/* Seasonal Recommendations */}

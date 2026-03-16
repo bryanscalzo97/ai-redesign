@@ -19,6 +19,7 @@ import {
   type RoomType,
 } from "@/types/redesign";
 import { HOST_INSIGHTS } from "@/constants/host-insights";
+import { getScoreCategory } from "@/constants/semanticColors";
 import { AuthContext } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
@@ -562,11 +563,7 @@ export function CameraCapture() {
                       weight="bold"
                       style={{
                         color:
-                          roomAnalysis.score < 4
-                            ? "#6366F1"
-                            : roomAnalysis.score <= 7
-                            ? "#F59E0B"
-                            : "#22C55E",
+                          getScoreCategory(roomAnalysis.score).bg,
                       }}
                     >
                       {roomAnalysis.score.toFixed(1)}
@@ -587,11 +584,7 @@ export function CameraCapture() {
                           weight="bold"
                           style={{
                             color:
-                              roomAnalysis.afterScore < 4
-                                ? "#6366F1"
-                                : roomAnalysis.afterScore <= 7
-                                ? "#F59E0B"
-                                : "#22C55E",
+                              getScoreCategory(roomAnalysis.afterScore).bg,
                           }}
                         >
                           {roomAnalysis.afterScore.toFixed(1)}
