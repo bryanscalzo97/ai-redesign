@@ -39,12 +39,33 @@ function RedesignCard({
 }) {
   return (
     <Pressable onPress={onPress}>
-      <Image
-        source={{ uri: entry.afterImagePath }}
-        style={s.gridImage}
-        contentFit="cover"
-        transition={600}
-      />
+      <View>
+        <Image
+          source={{ uri: entry.afterImagePath }}
+          style={s.gridImage}
+          contentFit="cover"
+          transition={600}
+        />
+        {entry.roomAnalysis && (
+          <View
+            style={[
+              s.scoreBadge,
+              {
+                backgroundColor:
+                  entry.roomAnalysis.score < 4
+                    ? "#EF4444"
+                    : entry.roomAnalysis.score <= 7
+                    ? "#EAB308"
+                    : "#22C55E",
+              },
+            ]}
+          >
+            <Text type="caption" weight="bold" style={{ color: "#fff" }}>
+              {entry.roomAnalysis.score.toFixed(1)}
+            </Text>
+          </View>
+        )}
+      </View>
       <Text
         type="caption"
         lightColor="black"
@@ -442,6 +463,14 @@ const s = StyleSheet.create({
     width: ITEM_SIZE,
     height: ITEM_SIZE,
     borderRadius: BORDER_RADIUS.MD,
+  },
+  scoreBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.FULL,
   },
   emptyState: {
     paddingVertical: 60,

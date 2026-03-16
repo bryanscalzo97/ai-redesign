@@ -1,3 +1,5 @@
+import type { RoomAnalysis } from "./room-analysis";
+
 export interface RedesignEntry {
   id: string;
   createdAt: string;
@@ -8,6 +10,7 @@ export interface RedesignEntry {
   beforeImagePath: string;
   afterImagePath: string;
   listingText?: string;
+  roomAnalysis?: RoomAnalysis;
 }
 
 export interface Project {

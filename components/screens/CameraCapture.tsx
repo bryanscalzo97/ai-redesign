@@ -21,6 +21,7 @@ import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { Image } from "expo-image";
 import * as ImageManipulator from "expo-image-manipulator";
+import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -78,7 +79,7 @@ export function CameraCapture() {
   }>();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
-  const { generate, isGenerating, generatedImage, error, reset } = useRedesignCreation();
+  const { generate, isGenerating, generatedImage, error, reset, roomAnalysis, isAnalyzing } = useRedesignCreation();
   const { isAuthenticated } = use(AuthContext);
   const { projects, createProject, addRedesignToProject } = useProjects();
 
@@ -135,6 +136,22 @@ export function CameraCapture() {
     if (photo?.uri) {
       setCapturedUri(photo.uri);
       const base64 = await resizeAndCompress(photo.uri);
+      if (base64) {
+        setImageBase64(base64);
+        setStep("options");
+      }
+    }
+  }, [resizeAndCompress]);
+
+  const handlePickFromGallery = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const uri = result.assets[0].uri;
+      setCapturedUri(uri);
+      const base64 = await resizeAndCompress(uri);
       if (base64) {
         setImageBase64(base64);
         setStep("options");
@@ -272,6 +289,7 @@ export function CameraCapture() {
           beforeBase64: imageBase64,
           afterBase64: generatedImage,
           listingText: listingText ?? undefined,
+          roomAnalysis: roomAnalysis ?? undefined,
         });
         setSavedToProject(true);
       } catch (err) {
@@ -288,6 +306,7 @@ export function CameraCapture() {
       guestType,
       customInstructions,
       listingText,
+      roomAnalysis,
       addRedesignToProject,
     ]
   );
@@ -367,6 +386,109 @@ export function CameraCapture() {
               />
             )}
           </View>
+
+          {/* Room Analysis */}
+          <View style={s.analysisSection}>
+            <Text type="lg" weight="bold" lightColor="white" darkColor="white">
+              Your Room Analysis
+            </Text>
+
+            {isAnalyzing ? (
+              <View style={s.generatingTextRow}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Analyzing your space...
+                </Text>
+              </View>
+            ) : roomAnalysis ? (
+              <>
+                <View style={s.scoreRow}>
+                  <Text
+                    type="title"
+                    weight="bold"
+                    style={{
+                      color:
+                        roomAnalysis.score < 4
+                          ? "#EF4444"
+                          : roomAnalysis.score <= 7
+                          ? "#EAB308"
+                          : "#22C55E",
+                    }}
+                  >
+                    {roomAnalysis.score.toFixed(1)}
+                  </Text>
+                  <Text type="body" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {" "}/ 10
+                  </Text>
+                </View>
+
+                {roomAnalysis.issues.length > 0 && (
+                  <View style={s.issuesList}>
+                    <Text type="sm" weight="semibold" style={{ color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
+                      Issues Detected
+                    </Text>
+                    {roomAnalysis.issues.map((issue, i) => (
+                      <View key={i} style={s.issueRow}>
+                        <Text type="sm" style={{ color: "rgba(255,255,255,0.5)" }}>•</Text>
+                        <Text type="sm" style={{ color: "rgba(255,255,255,0.8)", flex: 1 }}>
+                          {issue.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <Text type="sm" style={{ color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
+                Analysis unavailable
+              </Text>
+            )}
+          </View>
+
+          {/* Recommended Improvements */}
+          {(isAnalyzing || (roomAnalysis && roomAnalysis.suggestions.length > 0)) && (
+            <View style={s.analysisSection}>
+              <Text type="lg" weight="bold" lightColor="white" darkColor="white">
+                Recommended Improvements
+              </Text>
+
+              {isAnalyzing ? (
+                <View style={s.generatingTextRow}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+                    Generating suggestions...
+                  </Text>
+                </View>
+              ) : roomAnalysis ? (
+                <View style={s.suggestionsList}>
+                  {(["add", "remove", "move", "replace"] as const).map((action) => {
+                    const items = roomAnalysis.suggestions.filter((sg) => sg.action === action);
+                    if (items.length === 0) return null;
+                    const actionLabel = action === "add" ? "Add" : action === "remove" ? "Remove" : action === "move" ? "Move" : "Replace";
+                    const actionIcon = action === "add" ? "+" : action === "remove" ? "−" : action === "move" ? "↔" : "⟳";
+                    return (
+                      <View key={action} style={s.suggestionGroup}>
+                        <Text type="sm" weight="semibold" style={{ color: "rgba(255,255,255,0.7)", marginBottom: 2 }}>
+                          {actionLabel}
+                        </Text>
+                        {items.map((suggestion, i) => (
+                          <View key={i} style={s.issueRow}>
+                            <Text type="sm" style={{ color: "rgba(255,255,255,0.5)", width: 18 }}>
+                              {actionIcon}
+                            </Text>
+                            <Text type="sm" style={{ color: "rgba(255,255,255,0.8)", flex: 1 }}>
+                              {suggestion.item}
+                              {suggestion.detail ? ` — ${suggestion.detail}` : ""}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+          )}
 
           {/* Listing text */}
           <View style={s.listingTextSection}>
@@ -677,9 +799,13 @@ export function CameraCapture() {
       {/* Bottom controls */}
       <View style={[s.bottomBar, { paddingBottom: insets.bottom + SPACING.MD }]}>
         <View style={s.captureRow}>
+          <Pressable onPress={handlePickFromGallery} style={s.galleryButton}>
+            <Icon symbol="photo.on.rectangle" size="md" color="#fff" />
+          </Pressable>
           <Pressable onPress={handleCapture} style={s.captureButton}>
             <View style={s.captureButtonInner} />
           </Pressable>
+          <View style={s.galleryButton} />
         </View>
       </View>
     </View>
@@ -799,6 +925,15 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 32,
+  },
+  galleryButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   captureButton: {
     width: 76,
@@ -885,6 +1020,30 @@ const s = StyleSheet.create({
     borderRadius: BORDER_RADIUS.FULL,
     paddingVertical: 10,
     alignItems: "center",
+  },
+  analysisSection: {
+    paddingHorizontal: SPACING.MD,
+    marginTop: SPACING.LG,
+  },
+  scoreRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginTop: 4,
+  },
+  issuesList: {
+    marginTop: SPACING.SM,
+  },
+  issueRow: {
+    flexDirection: "row",
+    gap: 6,
+    paddingVertical: 2,
+  },
+  suggestionsList: {
+    marginTop: SPACING.SM,
+    gap: SPACING.SM,
+  },
+  suggestionGroup: {
+    gap: 2,
   },
   listingTextSection: {
     paddingHorizontal: SPACING.MD,

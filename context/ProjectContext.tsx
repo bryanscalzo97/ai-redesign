@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Project, RedesignEntry } from "@/types/project";
+import type { RoomAnalysis } from "@/types/room-analysis";
 import * as ProjectStorage from "@/lib/project-storage";
 
 export interface ProjectContextValue {
@@ -28,6 +29,7 @@ export interface ProjectContextValue {
       beforeBase64: string;
       afterBase64: string;
       listingText?: string;
+      roomAnalysis?: RoomAnalysis;
     }
   ) => Promise<RedesignEntry>;
   updateRedesignListingText: (

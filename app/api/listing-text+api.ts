@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       },
     };
 
-    const url = constants.GEMINI_IMAGE_BASE_URL;
+    const url = constants.GEMINI_TEXT_BASE_URL;
 
     const response = await fetch(url, {
       method: "POST",

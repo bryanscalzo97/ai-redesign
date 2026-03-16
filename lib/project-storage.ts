@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { File, Directory, Paths } from "expo-file-system";
 import type { Project, RedesignEntry } from "@/types/project";
+import type { RoomAnalysis } from "@/types/room-analysis";
 
 const INDEX_KEY = "projects_index";
 const PROJECT_PREFIX = "project:";
@@ -148,6 +149,7 @@ export async function addRedesignToProject(
     beforeBase64: string;
     afterBase64: string;
     listingText?: string;
+    roomAnalysis?: RoomAnalysis;
   }
 ): Promise<RedesignEntry> {
   const project = await getProject(projectId);
@@ -178,6 +180,7 @@ export async function addRedesignToProject(
     beforeImagePath: beforePath,
     afterImagePath: afterPath,
     listingText: data.listingText,
+    roomAnalysis: data.roomAnalysis,
   };
 
   project.redesigns.unshift(entry);

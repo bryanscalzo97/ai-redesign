@@ -8,6 +8,7 @@ import {
 } from "react";
 import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import type { RedesignCreationInput } from "@/types/redesign";
+import type { RoomAnalysis } from "@/types/room-analysis";
 
 export interface RedesignCreationState {
   image?: { uri: string; base64: string };
@@ -19,6 +20,8 @@ export interface RedesignCreationState {
   generatedImage?: string;
   isGenerating: boolean;
   error?: string;
+  roomAnalysis?: RoomAnalysis;
+  isAnalyzing: boolean;
   startedAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +36,7 @@ export interface RedesignCreationActions {
   nextStep: () => void;
   previousStep: () => void;
   generate: (input: RedesignCreationInput) => Promise<void>;
+  analyzeRoom: () => Promise<void>;
   retry: () => void;
   reset: () => void;
   notifySave: () => void;
@@ -56,6 +60,8 @@ const initialState: RedesignCreationState = {
   generatedImage: undefined,
   isGenerating: false,
   error: undefined,
+  roomAnalysis: undefined,
+  isAnalyzing: false,
   startedAt: new Date(),
   updatedAt: new Date(),
 };
@@ -73,6 +79,7 @@ export const RedesignCreationContext =
     nextStep: () => {},
     previousStep: () => {},
     generate: async () => {},
+    analyzeRoom: async () => {},
     retry: () => {},
     reset: () => {},
     notifySave: () => {},
@@ -181,8 +188,40 @@ export function RedesignCreationProvider({
         ...prev,
         isGenerating: false,
         generatedImage: data.imageData,
+        roomAnalysis: undefined,
+        isAnalyzing: true,
         updatedAt: new Date(),
       }));
+
+      // Fire-and-forget room analysis in parallel
+      fetch("/api/room-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: input.imageBase64,
+          roomType: input.roomType,
+          style: input.style,
+          guestType: input.guestType,
+        }),
+      })
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success && result.analysis) {
+            setState((prev) => ({
+              ...prev,
+              roomAnalysis: result.analysis,
+              isAnalyzing: false,
+              updatedAt: new Date(),
+            }));
+          } else {
+            console.error("Room analysis failed:", result.error || "Unknown error");
+            setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+          }
+        })
+        .catch((err) => {
+          console.error("Room analysis request failed:", err);
+          setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+        });
     } catch {
       setState((prev) => ({
         ...prev,
@@ -190,6 +229,34 @@ export function RedesignCreationProvider({
         error: "Failed to connect to the server",
         updatedAt: new Date(),
       }));
+    }
+  }, []);
+
+  const analyzeRoom = useCallback(async () => {
+    const input = lastInputRef.current;
+    if (!input) return;
+
+    setState((prev) => ({ ...prev, isAnalyzing: true, roomAnalysis: undefined, updatedAt: new Date() }));
+
+    try {
+      const response = await fetch("/api/room-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: input.imageBase64,
+          roomType: input.roomType,
+          style: input.style,
+          guestType: input.guestType,
+        }),
+      });
+      const result = await response.json();
+      if (result.success && result.analysis) {
+        setState((prev) => ({ ...prev, roomAnalysis: result.analysis, isAnalyzing: false, updatedAt: new Date() }));
+      } else {
+        setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+      }
+    } catch {
+      setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
     }
   }, []);
 
@@ -220,6 +287,7 @@ export function RedesignCreationProvider({
     nextStep,
     previousStep,
     generate,
+    analyzeRoom,
     retry,
     reset,
     notifySave,
