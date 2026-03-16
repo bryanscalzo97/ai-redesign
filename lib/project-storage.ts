@@ -94,13 +94,18 @@ export async function createProject(
 
 export async function updateProjectMeta(
   projectId: string,
-  meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+  meta: {
+    region?: Project["region"];
+    hemisphere?: Project["hemisphere"];
+    nightlyRate?: number;
+  }
 ): Promise<void> {
   const project = await getProject(projectId);
   if (!project) throw new Error("Project not found");
 
   if (meta.region !== undefined) project.region = meta.region;
   if (meta.hemisphere !== undefined) project.hemisphere = meta.hemisphere;
+  if (meta.nightlyRate !== undefined) project.nightlyRate = meta.nightlyRate;
   project.updatedAt = new Date().toISOString();
   await saveProject(project);
 }

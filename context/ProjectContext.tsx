@@ -40,7 +40,11 @@ export interface ProjectContextValue {
   deleteRedesign: (projectId: string, redesignId: string) => Promise<void>;
   updateProjectMeta: (
     projectId: string,
-    meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+    meta: {
+      region?: Project["region"];
+      hemisphere?: Project["hemisphere"];
+      nightlyRate?: number;
+    }
   ) => Promise<void>;
   toggleSuggestionChecked: (
     projectId: string,
@@ -137,7 +141,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const updateProjectMeta = useCallback(
     async (
       projectId: string,
-      meta: { region?: Project["region"]; hemisphere?: Project["hemisphere"] }
+      meta: {
+        region?: Project["region"];
+        hemisphere?: Project["hemisphere"];
+        nightlyRate?: number;
+      }
     ) => {
       await ProjectStorage.updateProjectMeta(projectId, meta);
       await refreshProjects();

@@ -11,8 +11,10 @@ import { useProjects } from "@/context/ProjectContext";
 import { getSeasonalRecommendation } from "@/lib/seasonal-engine";
 import {
   computePropertyScore,
+  estimateROI,
   suggestionKey,
   type AggregatedSuggestion,
+  type PropertyScore,
 } from "@/lib/project-score";
 import {
   groupRedesignsByRoom,
@@ -394,6 +396,153 @@ function RoomBreakdownRow({
   );
 }
 
+// ─── Action Plan Export ──────────────────────────────────────────────────────
+function buildActionPlanText(
+  propertyName: string,
+  suggestions: AggregatedSuggestion[],
+  totalCost: number,
+  completedCost: number,
+  completedCount: number,
+  totalCount: number
+): string {
+  const grouped = new Map<string, AggregatedSuggestion[]>();
+  for (const sg of suggestions) {
+    const existing = grouped.get(sg.roomLabel) ?? [];
+    existing.push(sg);
+    grouped.set(sg.roomLabel, existing);
+  }
+
+  const lines: string[] = [
+    `ACTION PLAN: ${propertyName}`,
+    `Progress: ${completedCount}/${totalCount} completed`,
+    `Budget: $${completedCost} spent of $${totalCost} total`,
+    "",
+  ];
+
+  for (const [room, items] of grouped) {
+    lines.push(room);
+    for (const item of items) {
+      const check = item.checked ? "[x]" : "[ ]";
+      const cost = item.suggestion.estimatedCost
+        ? ` (~$${item.suggestion.estimatedCost})`
+        : "";
+      const detail = item.suggestion.detail
+        ? ` - ${item.suggestion.detail}`
+        : "";
+      lines.push(`  ${check} ${item.suggestion.item}${detail}${cost}`);
+    }
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+// ─── ROI Card ───────────────────────────────────────────────────────────────
+function ROICard({
+  propertyScore,
+  nightlyRate,
+  projectId,
+  isDark,
+}: {
+  propertyScore: PropertyScore;
+  nightlyRate: number | undefined;
+  projectId: string;
+  isDark: boolean;
+}) {
+  const { updateProjectMeta } = useProjects();
+
+  const handleSetRate = useCallback(() => {
+    Alert.prompt(
+      "Nightly Rate",
+      "Enter your average nightly rate ($)",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Save",
+          onPress: (val: string | undefined) => {
+            const rate = Number(val);
+            if (rate > 0) {
+              updateProjectMeta(projectId, { nightlyRate: rate });
+            }
+          },
+        },
+      ],
+      "plain-text",
+      nightlyRate?.toString() ?? "",
+      "decimal-pad"
+    );
+  }, [projectId, nightlyRate, updateProjectMeta]);
+
+  const roi = nightlyRate ? estimateROI(propertyScore, nightlyRate) : null;
+
+  return (
+    <View
+      style={[
+        s.dashboardCard,
+        {
+          backgroundColor: isDark
+            ? "rgba(255,255,255,0.08)"
+            : "rgba(0,0,0,0.04)",
+        },
+      ]}
+    >
+      <View style={s.actionPlanHeader}>
+        <Text type="body" weight="bold" lightColor="black" darkColor="white">
+          ROI Estimate
+        </Text>
+        <Pressable onPress={handleSetRate}>
+          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+            {nightlyRate ? `$${nightlyRate}/night` : "Set rate"}
+          </Text>
+        </Pressable>
+      </View>
+
+      {roi ? (
+        <View style={s.roiGrid}>
+          <View style={s.roiItem}>
+            <Text type="lg" weight="bold" style={{ color: "#22C55E" }}>
+              +{roi.bookingLiftPercent}%
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              More bookings
+            </Text>
+          </View>
+          <View style={s.roiItem}>
+            <Text type="lg" weight="bold" style={{ color: "#22C55E" }}>
+              +${roi.extraMonthlyRevenue}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              Extra / month
+            </Text>
+          </View>
+          <View style={s.roiItem}>
+            <Text type="lg" weight="bold" lightColor="black" darkColor="white">
+              {roi.paybackWeeks}w
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              Payback
+            </Text>
+          </View>
+          <View style={s.roiItem}>
+            <Text type="lg" weight="bold" lightColor="black" darkColor="white">
+              ${roi.investmentCost}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              To invest
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+          {nightlyRate
+            ? "Not enough data to estimate ROI yet."
+            : "Set your nightly rate to see estimated ROI for improvements."}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 // ─── Action Plan Card ───────────────────────────────────────────────────────
 function ActionPlanCard({
   suggestions,
@@ -402,6 +551,7 @@ function ActionPlanCard({
   completedCount,
   totalCount,
   projectId,
+  propertyName,
   isDark,
 }: {
   suggestions: AggregatedSuggestion[];
@@ -410,6 +560,7 @@ function ActionPlanCard({
   completedCount: number;
   totalCount: number;
   projectId: string;
+  propertyName: string;
   isDark: boolean;
 }) {
   const { toggleSuggestionChecked } = useProjects();
@@ -418,21 +569,33 @@ function ActionPlanCard({
   // Group by roomLabel
   const grouped = useMemo(() => {
     const map = new Map<string, AggregatedSuggestion[]>();
-    for (const s of suggestions) {
-      const existing = map.get(s.roomLabel) ?? [];
-      existing.push(s);
-      map.set(s.roomLabel, existing);
+    for (const sg of suggestions) {
+      const existing = map.get(sg.roomLabel) ?? [];
+      existing.push(sg);
+      map.set(sg.roomLabel, existing);
     }
     return Array.from(map.entries());
   }, [suggestions]);
 
   const handleToggle = useCallback(
-    (s: AggregatedSuggestion) => {
-      const key = suggestionKey(s.redesignId, s.index);
+    (sg: AggregatedSuggestion) => {
+      const key = suggestionKey(sg.redesignId, sg.index);
       toggleSuggestionChecked(projectId, key);
     },
     [projectId, toggleSuggestionChecked]
   );
+
+  const handleExport = useCallback(() => {
+    const text = buildActionPlanText(
+      propertyName,
+      suggestions,
+      totalCost,
+      completedCost,
+      completedCount,
+      totalCount
+    );
+    Share.share({ message: text });
+  }, [propertyName, suggestions, totalCost, completedCost, completedCount, totalCount]);
 
   return (
     <View
@@ -450,10 +613,16 @@ function ActionPlanCard({
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
           Action Plan
         </Text>
-        <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.6 }}>
-          Total: ${totalCost} · Done: ${completedCost}
-        </Text>
+        <Pressable onPress={handleExport}>
+          <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
+            Share
+          </Text>
+        </Pressable>
       </View>
+
+      <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.6 }}>
+        Total: ${totalCost} · Done: ${completedCost}
+      </Text>
 
       {/* Progress bar */}
       <View style={s.progressBarBg}>
@@ -728,9 +897,17 @@ export function ProjectDetail() {
               completedCount={propertyScore.completedCount}
               totalCount={propertyScore.totalCount}
               projectId={project.id}
+              propertyName={project.name}
               isDark={isDark}
             />
           )}
+
+          <ROICard
+            propertyScore={propertyScore}
+            nightlyRate={project.nightlyRate}
+            projectId={project.id}
+            isDark={isDark}
+          />
         </>
       )}
 
@@ -1032,6 +1209,18 @@ const s = StyleSheet.create({
     alignItems: "flex-start",
     gap: 4,
     paddingVertical: 2,
+  },
+  // ROI
+  roiGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: SPACING.SM,
+  },
+  roiItem: {
+    width: "46%" as any,
+    alignItems: "center",
+    gap: 2,
+    paddingVertical: SPACING.SM,
   },
   // Insight
   insightBanner: {

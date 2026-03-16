@@ -9,6 +9,11 @@ import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { ALBUM_NAME } from "@/lib/save-to-library";
 import {
+  computePortfolioSummary,
+  computePropertyScore,
+  type PortfolioSummary,
+} from "@/lib/project-score";
+import {
   REDESIGN_STYLE_LABELS,
   ROOM_TYPE_LABELS,
   GUEST_TYPE_LABELS,
@@ -19,7 +24,7 @@ import {
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { Link, useRouter } from "expo-router";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   Pressable,
@@ -32,6 +37,12 @@ import {
 const CARD_WIDTH = 160;
 const CARD_HEIGHT = 220;
 const RECENT_SIZE = 120;
+
+function scoreColor(score: number): string {
+  if (score < 4) return "#EF4444";
+  if (score <= 7) return "#EAB308";
+  return "#22C55E";
+}
 
 const STYLE_IMAGES: Partial<Record<RedesignStyle, string>> = {
   "hotel-boutique": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=400&q=80",
@@ -103,6 +114,164 @@ function StyleCard({
   );
 }
 
+// ─── Portfolio Dashboard ────────────────────────────────────────────────────
+function PortfolioDashboard({
+  summary,
+  isDark,
+  onPropertyPress,
+}: {
+  summary: PortfolioSummary;
+  isDark: boolean;
+  onPropertyPress: (id: string) => void;
+}) {
+  const cardBg = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)";
+
+  return (
+    <View style={s.portfolioSection}>
+      {/* Overall stats card */}
+      <View style={[s.portfolioCard, { backgroundColor: cardBg }]}>
+        <Text type="lg" weight="bold" lightColor="black" darkColor="white">
+          Portfolio Overview
+        </Text>
+
+        <View style={s.portfolioStats}>
+          <View style={s.portfolioStat}>
+            <Text
+              type="title"
+              weight="bold"
+              style={{
+                color: scoreColor(summary.overallAverageScore),
+                fontSize: 32,
+                lineHeight: 38,
+              }}
+            >
+              {summary.overallAverageScore.toFixed(1)}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              Avg Score
+            </Text>
+          </View>
+          <View style={s.portfolioStat}>
+            <Text
+              type="title"
+              weight="bold"
+              lightColor="black"
+              darkColor="white"
+              style={{ fontSize: 32, lineHeight: 38 }}
+            >
+              {summary.scannedProperties}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              Scanned
+            </Text>
+          </View>
+          <View style={s.portfolioStat}>
+            <Text
+              type="title"
+              weight="bold"
+              style={{ color: "#EAB308", fontSize: 32, lineHeight: 38 }}
+            >
+              {summary.totalPendingActions}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              To Do
+            </Text>
+          </View>
+          <View style={s.portfolioStat}>
+            <Text
+              type="title"
+              weight="bold"
+              lightColor="black"
+              darkColor="white"
+              style={{ fontSize: 32, lineHeight: 38 }}
+            >
+              ${summary.totalPendingCost}
+            </Text>
+            <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+              To Invest
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Property ranking */}
+      <Text
+        type="body"
+        weight="bold"
+        lightColor="black"
+        darkColor="white"
+        style={{ paddingHorizontal: SPACING.MD }}
+      >
+        Properties by Score
+      </Text>
+
+      {summary.properties.map(({ project, score }, index) => {
+        const isWorst = index === 0;
+        return (
+          <Pressable
+            key={project.id}
+            onPress={() => onPropertyPress(project.id)}
+            style={[
+              s.propertyRankRow,
+              {
+                backgroundColor: isWorst
+                  ? isDark
+                    ? "rgba(239,68,68,0.12)"
+                    : "rgba(239,68,68,0.06)"
+                  : cardBg,
+              },
+            ]}
+          >
+            <View
+              style={[
+                s.rankBadge,
+                { backgroundColor: scoreColor(score.averageScore) },
+              ]}
+            >
+              <Text type="sm" weight="bold" style={{ color: "#fff" }}>
+                {score.averageScore.toFixed(1)}
+              </Text>
+            </View>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text
+                type="sm"
+                weight="semibold"
+                lightColor="black"
+                darkColor="white"
+                numberOfLines={1}
+              >
+                {project.name}
+              </Text>
+              <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
+                {score.rooms.length} rooms · {score.totalCount - score.completedCount} actions pending
+              </Text>
+            </View>
+            {isWorst && (
+              <View style={s.startHereBadge}>
+                <Text type="caption" weight="bold" style={{ color: "#EF4444" }}>
+                  Start here
+                </Text>
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
+
+      {summary.totalProperties > summary.scannedProperties && (
+        <Text
+          type="caption"
+          lightColor="black"
+          darkColor="white"
+          style={{ opacity: 0.4, paddingHorizontal: SPACING.MD }}
+        >
+          {summary.totalProperties - summary.scannedProperties} properties not yet scanned
+        </Text>
+      )}
+    </View>
+  );
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────
 export function Home() {
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
@@ -117,6 +286,11 @@ export function Home() {
 
   const isDark = colorScheme === "dark";
   const textColor = isDark ? "#fff" : "#000";
+
+  const portfolio = useMemo(
+    () => computePortfolioSummary(projects),
+    [projects]
+  );
 
   const loadRecentAssets = useCallback(async () => {
     try {
@@ -146,6 +320,16 @@ export function Home() {
     setIsRefreshing(false);
   }, [loadRecentAssets]);
 
+  const handlePropertyPress = useCallback(
+    (id: string) => {
+      router.push({
+        pathname: "/(tabs)/redesigns/project-detail",
+        params: { id },
+      });
+    },
+    [router]
+  );
+
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
@@ -162,16 +346,29 @@ export function Home() {
         <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
       }
     >
+      {/* Portfolio Dashboard (when properties with scans exist) */}
+      {portfolio.scannedProperties > 0 && (
+        <PortfolioDashboard
+          summary={portfolio}
+          isDark={isDark}
+          onPropertyPress={handlePropertyPress}
+        />
+      )}
+
       {/* Hero CTA */}
       <Pressable
         onPress={() => router.push("/(tabs)/camera")}
         style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
       >
         <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-          Boost Your Bookings
+          {portfolio.scannedProperties > 0
+            ? "Scan Another Space"
+            : "Boost Your Bookings"}
         </Text>
         <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-          Scan your space and optimize it for more bookings
+          {portfolio.scannedProperties > 0
+            ? "Add more rooms to improve your portfolio score"
+            : "Scan your space and optimize it for more bookings"}
         </Text>
       </Pressable>
 
@@ -376,5 +573,45 @@ const s = StyleSheet.create({
     borderRadius: BORDER_RADIUS.LG,
     paddingVertical: SPACING.MD,
     paddingHorizontal: SPACING.MD,
+  },
+  // Portfolio Dashboard
+  portfolioSection: {
+    marginTop: SPACING.MD,
+    gap: SPACING.SM,
+  },
+  portfolioCard: {
+    marginHorizontal: SPACING.MD,
+    borderRadius: BORDER_RADIUS.LG,
+    padding: SPACING.MD,
+    gap: SPACING.SM,
+  },
+  portfolioStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  portfolioStat: {
+    alignItems: "center",
+    gap: 2,
+  },
+  propertyRankRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.SM,
+    marginHorizontal: SPACING.MD,
+    padding: SPACING.SM,
+    borderRadius: BORDER_RADIUS.MD,
+  },
+  rankBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  startHereBadge: {
+    backgroundColor: "rgba(239,68,68,0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.FULL,
   },
 });

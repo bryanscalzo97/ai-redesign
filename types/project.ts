@@ -23,4 +23,5 @@ export interface Project {
   region?: import("./seasonal").PropertyRegion;
   hemisphere?: import("./seasonal").Hemisphere;
   checkedSuggestions?: string[];
+  nightlyRate?: number;
 }

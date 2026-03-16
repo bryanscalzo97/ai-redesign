@@ -1,12 +1,35 @@
 import LinearGradientImageBlur from "@/components/LinearGradientImageBlur";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
+import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { AuthContext } from "@/context/AuthContext";
-import { use } from "react";
-import { StyleSheet, View } from "react-native";
+import { use, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+
+const STEPS = [
+  {
+    title: "Scan your spaces",
+    subtitle:
+      "Take photos of every room in your property. Our AI analyzes what guests see and scores your listing potential.",
+  },
+  {
+    title: "Get your action plan",
+    subtitle:
+      "See exactly what to improve, how much it costs, and which changes will get you the most bookings.",
+  },
+  {
+    title: "Track your progress",
+    subtitle:
+      "Re-scan after improvements to watch your score climb. Manage all your properties from one dashboard.",
+  },
+];
 
 export function Onboarding() {
   const { setIsOnboarded } = use(AuthContext);
+  const [step, setStep] = useState(0);
+
+  const isLast = step === STEPS.length - 1;
+  const current = STEPS[step];
 
   return (
     <View style={styles.container}>
@@ -18,24 +41,62 @@ export function Onboarding() {
       />
       <View style={styles.contentContainer}>
         <View style={styles.content}>
+          {/* Step indicators */}
+          <View style={styles.dots}>
+            {STEPS.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  i === step && styles.dotActive,
+                  i < step && styles.dotDone,
+                ]}
+              />
+            ))}
+          </View>
+
+          <Text type="caption" weight="semibold" style={styles.stepLabel}>
+            Step {step + 1} of {STEPS.length}
+          </Text>
+
           <Text type="4xl" weight="semibold" style={styles.title}>
-            Build your app faster than ever
+            {current.title}
           </Text>
           <Text type="lg" weight="normal" style={styles.subtitle}>
-            Start with a ready-to-use, modern foundation that you can make your
-            own.
+            {current.subtitle}
           </Text>
-          <Button
-            title="Get started"
-            color="neutral"
-            variant="solid"
-            radius="full"
-            size="lg"
-            style={{ marginTop: 44 } as any}
-            onPress={() => {
-              setIsOnboarded(true);
-            }}
-          />
+
+          {isLast ? (
+            <Button
+              title="Get started"
+              color="neutral"
+              variant="solid"
+              radius="full"
+              size="lg"
+              style={{ marginTop: 32 } as any}
+              onPress={() => setIsOnboarded(true)}
+            />
+          ) : (
+            <View style={styles.actions}>
+              <Button
+                title="Next"
+                color="neutral"
+                variant="solid"
+                radius="full"
+                size="lg"
+                style={{ flex: 1 } as any}
+                onPress={() => setStep(step + 1)}
+              />
+              <Pressable
+                onPress={() => setIsOnboarded(true)}
+                style={styles.skipButton}
+              >
+                <Text type="sm" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  Skip
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -60,20 +121,53 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingHorizontal: 16,
   },
-  title: {
-    lineHeight: 36,
-    textAlign: "center",
-  },
-  subtitle: {
-    textAlign: "center",
-    marginTop: 8,
-    lineHeight: 24,
-    opacity: 0.5,
-  },
   content: {
     width: "100%",
     alignItems: "flex-start",
     position: "relative",
+    paddingHorizontal: 16,
+  },
+  dots: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 12,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  dotActive: {
+    backgroundColor: "#fff",
+    width: 24,
+  },
+  dotDone: {
+    backgroundColor: "rgba(255,255,255,0.6)",
+  },
+  stepLabel: {
+    color: "rgba(255,255,255,0.5)",
+    marginBottom: 4,
+  },
+  title: {
+    lineHeight: 36,
+    textAlign: "left",
+  },
+  subtitle: {
+    textAlign: "left",
+    marginTop: 8,
+    lineHeight: 24,
+    opacity: 0.5,
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginTop: 32,
+    width: "100%",
+  },
+  skipButton: {
+    paddingVertical: 12,
     paddingHorizontal: 16,
   },
 });
