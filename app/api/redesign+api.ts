@@ -14,6 +14,7 @@ const RedesignRequestSchema = z.object({
   style: z.string().min(1, "Style is required"),
   customPrompt: z.string().optional(),
   guestType: z.string().optional(),
+  budgetLevel: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -31,13 +32,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { image_base64, roomType, style, customPrompt, guestType } = parsed.data;
+    const { image_base64, roomType, style, customPrompt, guestType, budgetLevel } = parsed.data;
 
     const imageSizeKB = Math.round(image_base64.length * 0.75 / 1024);
-    slog("redesign+api", "Redesign request received", { roomType, style, guestType, imageSizeKB });
+    slog("redesign+api", "Redesign request received", { roomType, style, guestType, budgetLevel, imageSizeKB });
 
     // Build the prompt
-    const prompt = buildRedesignPrompt(roomType, style, customPrompt, guestType);
+    const prompt = buildRedesignPrompt(roomType, style, customPrompt, guestType, budgetLevel);
     slog("redesign+api", "Prompt built", { prompt });
 
     // Convert image to Gemini format

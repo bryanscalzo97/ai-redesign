@@ -53,6 +53,7 @@ const RoomAnalysisRequestSchema = z.object({
   roomType: z.string().min(1, "Room type is required"),
   style: z.string().min(1, "Style is required"),
   guestType: z.string().optional(),
+  budgetLevel: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -70,10 +71,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { image_base64, roomType, style, guestType } = parsed.data;
-    slog("room-analysis+api", "Room analysis request", { roomType, style, guestType });
+    const { image_base64, roomType, style, guestType, budgetLevel } = parsed.data;
+    slog("room-analysis+api", "Room analysis request", { roomType, style, guestType, budgetLevel });
 
-    const prompt = buildRoomAnalysisPrompt(roomType, style, guestType);
+    const prompt = buildRoomAnalysisPrompt(roomType, style, guestType, budgetLevel);
     const { mime_type, data } = extractMimeAndData(image_base64);
 
     const geminiBody = JSON.stringify({

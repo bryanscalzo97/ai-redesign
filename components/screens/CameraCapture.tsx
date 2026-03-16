@@ -7,9 +7,12 @@ import {
   SPACING,
 } from "@/constants/designTokens";
 import {
+  BUDGET_LEVEL_LABELS,
+  BUDGET_LEVEL_DESCRIPTIONS,
   GUEST_TYPE_LABELS,
   REDESIGN_STYLE_LABELS,
   ROOM_TYPE_LABELS,
+  type BudgetLevel,
   type GuestType,
   type RedesignCreationInput,
   type RedesignStyle,
@@ -99,6 +102,7 @@ export function CameraCapture() {
     (params.prefillGuest as GuestType) || null
   );
   const [customInstructions, setCustomInstructions] = useState("");
+  const [budgetLevel, setBudgetLevel] = useState<BudgetLevel | null>(null);
 
   // Result state
   const [listingText, setListingText] = useState<string | null>(null);
@@ -109,6 +113,7 @@ export function CameraCapture() {
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
   const guestTypes = Object.keys(GUEST_TYPE_LABELS) as GuestType[];
+  const budgetLevels = Object.keys(BUDGET_LEVEL_LABELS) as BudgetLevel[];
 
   // Watch generation state to transition steps
   useEffect(() => {
@@ -165,6 +170,7 @@ export function CameraCapture() {
     setRoomType(null);
     setStyle(null);
     setGuestType(null);
+    setBudgetLevel(null);
     setListingText(null);
     setSavedToProject(false);
     reset();
@@ -180,11 +186,12 @@ export function CameraCapture() {
       imageBase64,
       customInstructions: customInstructions.trim() || undefined,
       guestType: guestType ?? undefined,
+      budgetLevel: budgetLevel ?? undefined,
     };
 
     setStep("generating");
     generate(input);
-  }, [imageBase64, roomType, style, guestType, customInstructions, generate]);
+  }, [imageBase64, roomType, style, guestType, budgetLevel, customInstructions, generate]);
 
   const handleNewScan = useCallback(() => {
     setCapturedUri(null);
@@ -192,6 +199,7 @@ export function CameraCapture() {
     setRoomType(null);
     setStyle(null);
     setGuestType(null);
+    setBudgetLevel(null);
     setListingText(null);
     setSavedToProject(false);
     reset();
@@ -402,24 +410,61 @@ export function CameraCapture() {
               </View>
             ) : roomAnalysis ? (
               <>
-                <View style={s.scoreRow}>
-                  <Text
-                    type="title"
-                    weight="bold"
-                    style={{
-                      color:
-                        roomAnalysis.score < 4
-                          ? "#EF4444"
-                          : roomAnalysis.score <= 7
-                          ? "#EAB308"
-                          : "#22C55E",
-                    }}
-                  >
-                    {roomAnalysis.score.toFixed(1)}
-                  </Text>
-                  <Text type="body" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {" "}/ 10
-                  </Text>
+                <View style={s.scoresContainer}>
+                  <View style={s.scoreCard}>
+                    <Text type="caption" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                      Before
+                    </Text>
+                    <Text
+                      type="title"
+                      weight="bold"
+                      style={{
+                        color:
+                          roomAnalysis.score < 4
+                            ? "#EF4444"
+                            : roomAnalysis.score <= 7
+                            ? "#EAB308"
+                            : "#22C55E",
+                      }}
+                    >
+                      {roomAnalysis.score.toFixed(1)}
+                    </Text>
+                  </View>
+
+                  {roomAnalysis.afterScore != null && (
+                    <>
+                      <Text type="lg" style={{ color: "rgba(255,255,255,0.3)", alignSelf: "center" }}>
+                        →
+                      </Text>
+                      <View style={s.scoreCard}>
+                        <Text type="caption" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
+                          After
+                        </Text>
+                        <Text
+                          type="title"
+                          weight="bold"
+                          style={{
+                            color:
+                              roomAnalysis.afterScore < 4
+                                ? "#EF4444"
+                                : roomAnalysis.afterScore <= 7
+                                ? "#EAB308"
+                                : "#22C55E",
+                          }}
+                        >
+                          {roomAnalysis.afterScore.toFixed(1)}
+                        </Text>
+                      </View>
+
+                      {roomAnalysis.afterScore > roomAnalysis.score && (
+                        <View style={s.improvementBadge}>
+                          <Text type="sm" weight="bold" style={{ color: "#22C55E" }}>
+                            +{(roomAnalysis.afterScore - roomAnalysis.score).toFixed(1)}
+                          </Text>
+                        </View>
+                      )}
+                    </>
+                  )}
                 </View>
 
                 {roomAnalysis.issues.length > 0 && (
@@ -479,6 +524,7 @@ export function CameraCapture() {
                             <Text type="sm" style={{ color: "rgba(255,255,255,0.8)", flex: 1 }}>
                               {suggestion.item}
                               {suggestion.detail ? ` — ${suggestion.detail}` : ""}
+                              {suggestion.estimatedCost ? ` (~$${suggestion.estimatedCost})` : ""}
                             </Text>
                           </View>
                         ))}
@@ -721,6 +767,42 @@ export function CameraCapture() {
                 );
               })}
             </ScrollView>
+          </View>
+
+          {/* Budget level (optional) */}
+          <View style={s.optionSection}>
+            <Text type="body" weight="semibold" style={s.optionLabel}>
+              Budget (optional)
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.chipsRow}
+            >
+              {budgetLevels.map((key) => {
+                const selected = budgetLevel === key;
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setBudgetLevel(selected ? null : key)}
+                    style={[s.chip, selected && s.chipSelected]}
+                  >
+                    <Text
+                      type="body"
+                      weight={selected ? "semibold" : "normal"}
+                      style={{ color: "#fff" }}
+                    >
+                      {BUDGET_LEVEL_LABELS[key]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            {budgetLevel && (
+              <Text type="caption" style={{ color: "rgba(255,255,255,0.5)", marginTop: 4 }}>
+                {BUDGET_LEVEL_DESCRIPTIONS[budgetLevel]}
+              </Text>
+            )}
           </View>
 
           {/* Generate or Sign In */}
@@ -1025,10 +1107,22 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.MD,
     marginTop: SPACING.LG,
   },
-  scoreRow: {
+  scoresContainer: {
     flexDirection: "row",
-    alignItems: "baseline",
-    marginTop: 4,
+    alignItems: "center",
+    gap: 12,
+    marginTop: 8,
+  },
+  scoreCard: {
+    alignItems: "center",
+    gap: 2,
+  },
+  improvementBadge: {
+    backgroundColor: "rgba(34,197,94,0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: "center",
   },
   issuesList: {
     marginTop: SPACING.SM,

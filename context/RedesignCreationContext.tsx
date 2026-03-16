@@ -161,6 +161,7 @@ export function RedesignCreationProvider({
           style: input.style,
           customPrompt: input.customInstructions,
           guestType: input.guestType,
+          budgetLevel: input.budgetLevel,
         }),
       });
 
@@ -193,28 +194,41 @@ export function RedesignCreationProvider({
         updatedAt: new Date(),
       }));
 
-      // Fire-and-forget room analysis in parallel
-      fetch("/api/room-analysis", {
+      // Fire both analyses in parallel: original image + redesigned image
+      const analysisBody = {
+        roomType: input.roomType,
+        style: input.style,
+        guestType: input.guestType,
+        budgetLevel: input.budgetLevel,
+      };
+
+      const beforeAnalysis = fetch("/api/room-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: input.imageBase64,
-          roomType: input.roomType,
-          style: input.style,
-          guestType: input.guestType,
-        }),
-      })
-        .then((res) => res.json())
-        .then((result) => {
-          if (result.success && result.analysis) {
+        body: JSON.stringify({ ...analysisBody, image_base64: input.imageBase64 }),
+      }).then((res) => res.json());
+
+      const afterAnalysis = fetch("/api/room-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...analysisBody, image_base64: data.imageData }),
+      }).then((res) => res.json());
+
+      Promise.all([beforeAnalysis, afterAnalysis])
+        .then(([beforeResult, afterResult]) => {
+          if (beforeResult.success && beforeResult.analysis) {
+            const analysis = beforeResult.analysis;
+            if (afterResult.success && afterResult.analysis) {
+              analysis.afterScore = afterResult.analysis.score;
+            }
             setState((prev) => ({
               ...prev,
-              roomAnalysis: result.analysis,
+              roomAnalysis: analysis,
               isAnalyzing: false,
               updatedAt: new Date(),
             }));
           } else {
-            console.error("Room analysis failed:", result.error || "Unknown error");
+            console.error("Room analysis failed:", beforeResult.error || "Unknown error");
             setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
           }
         })
@@ -247,6 +261,7 @@ export function RedesignCreationProvider({
           roomType: input.roomType,
           style: input.style,
           guestType: input.guestType,
+          budgetLevel: input.budgetLevel,
         }),
       });
       const result = await response.json();

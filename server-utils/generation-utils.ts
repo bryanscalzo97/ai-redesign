@@ -492,6 +492,17 @@ export function toGeminiImageParts(
 // Room Redesign Prompt
 // ============================================================================
 
+const BUDGET_LEVEL_PROMPT_ADDITIONS: Record<string, string> = {
+  "quick-fixes":
+    "IMPORTANT: Only make minimal, low-cost changes (under $50). Focus on swapping bedding, adding a few throw pillows, repositioning existing items, and small decor touches like candles or a plant. Keep ALL existing furniture. The changes should be things someone could do in an afternoon with a quick store run.",
+  "refresh":
+    "Make moderate changes ($50-200 budget). You can swap out textiles (curtains, bedding, towels), add new lighting fixtures, hang artwork, add area rugs, and introduce accent pieces. Keep the main furniture but refresh the accessories and soft furnishings.",
+  "makeover":
+    "Make significant changes ($200-500 budget). You can replace some furniture pieces (nightstands, chairs, coffee table), add a fresh paint color to an accent wall, introduce new rugs, lighting, and decorative elements. Keep the large/expensive pieces (bed frame, sofa, cabinets) but upgrade the rest.",
+  "full-redesign":
+    "Go all out with a complete transformation ($500+ budget). Replace furniture, change color schemes, upgrade lighting, add statement pieces, and create a fully cohesive design. The only constraint is keeping the room's architecture and layout.",
+};
+
 const GUEST_TYPE_PROMPT_ADDITIONS: Record<string, string> = {
   business:
     "Emphasize a dedicated workspace area with a clean desk, ergonomic chair, good task lighting, and cable management. The space should feel professional and productive.",
@@ -507,9 +518,14 @@ export function buildRedesignPrompt(
   roomType: string,
   style: string,
   customPrompt?: string,
-  guestType?: string
+  guestType?: string,
+  budgetLevel?: string
 ): string {
   let prompt = `Redesign this ${roomType} in a ${style} style, optimized for a short-term rental listing. Keep the exact same room structure, dimensions, windows, and doors. Change the furniture, decorations, colors, textures, and lighting to match the ${style} aesthetic. The result should look like a professional Airbnb listing photo — clean, bright, well-staged, and inviting. Focus on perceived value: the space should look like it justifies a higher nightly rate. Photorealistic quality.`;
+
+  if (budgetLevel && BUDGET_LEVEL_PROMPT_ADDITIONS[budgetLevel]) {
+    prompt += ` ${BUDGET_LEVEL_PROMPT_ADDITIONS[budgetLevel]}`;
+  }
 
   if (guestType && GUEST_TYPE_PROMPT_ADDITIONS[guestType]) {
     prompt += ` ${GUEST_TYPE_PROMPT_ADDITIONS[guestType]}`;

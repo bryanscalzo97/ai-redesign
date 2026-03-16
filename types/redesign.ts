@@ -22,12 +22,15 @@ export type RedesignStyle =
 
 export type GuestType = "business" | "couples" | "families" | "digital-nomads";
 
+export type BudgetLevel = "quick-fixes" | "refresh" | "makeover" | "full-redesign";
+
 export type RedesignCreationInput = {
   roomType: RoomType;
   style: RedesignStyle;
   imageBase64: string;
   customInstructions?: string;
   guestType?: GuestType;
+  budgetLevel?: BudgetLevel;
 };
 
 export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
@@ -52,6 +55,20 @@ export const REDESIGN_STYLE_LABELS: Record<RedesignStyle, string> = {
   "family-friendly": "Family Friendly",
   "budget-refresh": "Budget Refresh",
   "rustic-charm": "Rustic Charm",
+};
+
+export const BUDGET_LEVEL_LABELS: Record<BudgetLevel, string> = {
+  "quick-fixes": "Quick Fixes",
+  "refresh": "Refresh",
+  "makeover": "Makeover",
+  "full-redesign": "Full Redesign",
+};
+
+export const BUDGET_LEVEL_DESCRIPTIONS: Record<BudgetLevel, string> = {
+  "quick-fixes": "Under $50 — bedding, pillows, small decor",
+  "refresh": "$50–200 — new textiles, lighting, art",
+  "makeover": "$200–500 — furniture swaps, paint, rugs",
+  "full-redesign": "$500+ — complete transformation",
 };
 
 export const GUEST_TYPE_LABELS: Record<GuestType, string> = {
