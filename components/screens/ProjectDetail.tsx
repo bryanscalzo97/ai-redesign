@@ -47,6 +47,17 @@ const GRID_GAP = SPACING.XS;
 const NUM_COLUMNS = 2;
 const ITEM_SIZE = (screenWidth - SPACING.MD * 2 - GRID_GAP) / NUM_COLUMNS;
 
+async function readFileAsBase64(uri: string): Promise<string> {
+  const file = new ExpoFile(uri);
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 function scoreColor(score: number): string {
   if (score < 4) return "#EF4444";
   if (score <= 7) return "#EAB308";
@@ -81,7 +92,7 @@ function RedesignCard({
           contentFit="cover"
           transition={600}
         />
-        {entry.roomAnalysis && (
+        {entry.roomAnalysis ? (
           <View
             style={[
               s.scoreBadge,
@@ -90,6 +101,14 @@ function RedesignCard({
           >
             <Text type="caption" weight="bold" style={{ color: "#fff" }}>
               {entry.roomAnalysis.score.toFixed(1)}
+            </Text>
+          </View>
+        ) : (
+          <View
+            style={[s.scoreBadge, { backgroundColor: "rgba(0,0,0,0.5)" }]}
+          >
+            <Text type="caption" weight="bold" style={{ color: "#fff" }}>
+              ?
             </Text>
           </View>
         )}
@@ -121,11 +140,59 @@ function RedesignExpandedView({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { updateRedesignListingText } = useProjects();
+  const { updateRedesignListingText, updateRedesignAnalysis } = useProjects();
   const [listingText, setListingText] = useState(entry.listingText || "");
   const [isGeneratingText, setIsGeneratingText] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+
+  const handleAnalyze = useCallback(async () => {
+    setIsAnalyzing(true);
+    try {
+      let imageBase64: string | undefined;
+      try {
+        imageBase64 = await readFileAsBase64(entry.beforeImagePath);
+      } catch {
+        try {
+          imageBase64 = await readFileAsBase64(entry.afterImagePath);
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!imageBase64) {
+        Alert.alert("Error", "Could not read room image for analysis");
+        return;
+      }
+
+      const response = await fetch("/api/room-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: imageBase64,
+          roomType: entry.roomType,
+          style: entry.style,
+          guestType: entry.guestType,
+        }),
+      });
+      const data = await response.json();
+      if (data.success && data.analysis) {
+        await updateRedesignAnalysis(projectId, entry.id, data.analysis);
+        Alert.alert(
+          "Analysis Complete",
+          `Room scored ${data.analysis.score.toFixed(1)}/10 with ${data.analysis.suggestions?.length ?? 0} suggestions.`,
+          [{ text: "OK", onPress: onClose }]
+        );
+      } else {
+        Alert.alert("Error", data.error || "Failed to analyze room");
+      }
+    } catch {
+      Alert.alert("Error", "Failed to connect to the server");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }, [entry, projectId, updateRedesignAnalysis, onClose]);
 
   const handleGenerateText = useCallback(async () => {
     setIsGeneratingText(true);
@@ -133,10 +200,7 @@ function RedesignExpandedView({
       // Try to read the after-image and send as base64
       let imageBase64: string | undefined;
       try {
-        const file = new ExpoFile(entry.afterImagePath);
-        if (file.exists) {
-          imageBase64 = await file.text();
-        }
+        imageBase64 = await readFileAsBase64(entry.afterImagePath);
       } catch {
         // ignore — will generate without image
       }
@@ -205,8 +269,18 @@ function RedesignExpandedView({
         </Text>
       </View>
 
-      {/* Re-scan button */}
+      {/* Analyze / Re-scan */}
       <View style={s.rescanSection}>
+        {!entry.roomAnalysis && (
+          <Button
+            title={isAnalyzing ? "Analyzing..." : "Analyze This Room"}
+            onPress={handleAnalyze}
+            disabled={isAnalyzing}
+            variant="solid"
+            size="lg"
+            symbol="sparkle.magnifyingglass"
+          />
+        )}
         <Button
           title={`Re-scan this ${(ROOM_TYPE_LABELS as any)[entry.roomType] || "room"}`}
           onPress={handleRescan}
@@ -783,12 +857,19 @@ export function ProjectDetail() {
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const { projects, deleteProject, updateProjectMeta, toggleSuggestionChecked } =
-    useProjects();
+  const {
+    projects,
+    deleteProject,
+    updateProjectMeta,
+    toggleSuggestionChecked,
+    updateRedesignAnalysis,
+  } = useProjects();
   const [selectedEntry, setSelectedEntry] = useState<RedesignEntry | null>(
     null
   );
   const [editingMeta, setEditingMeta] = useState(false);
+  const [isAnalyzingAll, setIsAnalyzingAll] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState("");
   const [pickerRegion, setPickerRegion] = useState<PropertyRegion | undefined>(
     undefined
   );
@@ -858,6 +939,53 @@ export function ProjectDetail() {
     );
   }, [project, deleteProject, router]);
 
+  const unanalyzedEntries = useMemo(
+    () => project?.redesigns.filter((r) => !r.roomAnalysis) ?? [],
+    [project]
+  );
+
+  const handleAnalyzeAll = useCallback(async () => {
+    if (!project || unanalyzedEntries.length === 0) return;
+    setIsAnalyzingAll(true);
+    let done = 0;
+    for (const entry of unanalyzedEntries) {
+      done++;
+      setAnalyzeProgress(`Analyzing ${done} of ${unanalyzedEntries.length}...`);
+      try {
+        let imageBase64: string | undefined;
+        try {
+          imageBase64 = await readFileAsBase64(entry.beforeImagePath);
+        } catch {
+          try {
+            imageBase64 = await readFileAsBase64(entry.afterImagePath);
+          } catch {
+            // skip
+          }
+        }
+        if (!imageBase64) continue;
+
+        const response = await fetch("/api/room-analysis", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image_base64: imageBase64,
+            roomType: entry.roomType,
+            style: entry.style,
+            guestType: entry.guestType,
+          }),
+        });
+        const data = await response.json();
+        if (data.success && data.analysis) {
+          await updateRedesignAnalysis(project.id, entry.id, data.analysis);
+        }
+      } catch {
+        // continue with next
+      }
+    }
+    setIsAnalyzingAll(false);
+    setAnalyzeProgress("");
+  }, [project, unanalyzedEntries, updateRedesignAnalysis]);
+
   const handleRoomPillPress = useCallback(
     (redesignId: string) => {
       const entry = project?.redesigns.find((r) => r.id === redesignId);
@@ -914,6 +1042,28 @@ export function ProjectDetail() {
         radius="full"
         style={s.addButton as any}
       />
+
+      {/* Analyze all unanalyzed rooms */}
+      {unanalyzedEntries.length > 0 && (
+        <View style={s.analyzeAllSection}>
+          {isAnalyzingAll ? (
+            <View style={s.generatingRow}>
+              <ActivityIndicator size="small" />
+              <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.6 }}>
+                {analyzeProgress}
+              </Text>
+            </View>
+          ) : (
+            <Button
+              title={`Analyze ${unanalyzedEntries.length} Unscored ${unanalyzedEntries.length === 1 ? "Room" : "Rooms"}`}
+              onPress={handleAnalyzeAll}
+              variant="solid"
+              size="lg"
+              symbol="sparkle.magnifyingglass"
+            />
+          )}
+        </View>
+      )}
 
       {/* ── Dashboard Section ── */}
       {propertyScore && (
@@ -1201,6 +1351,10 @@ const s = StyleSheet.create({
   addButton: {
     marginTop: SPACING.MD,
   },
+  // Analyze all
+  analyzeAllSection: {
+    marginTop: SPACING.SM,
+  },
   // Dashboard
   dashboardCard: {
     borderRadius: BORDER_RADIUS.LG,
@@ -1391,6 +1545,7 @@ const s = StyleSheet.create({
   },
   rescanSection: {
     paddingHorizontal: SPACING.MD,
+    gap: SPACING.SM,
   },
   textSection: {
     paddingHorizontal: SPACING.MD,

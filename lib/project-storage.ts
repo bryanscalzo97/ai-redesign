@@ -214,6 +214,22 @@ export async function updateRedesignListingText(
   await saveProject(project);
 }
 
+export async function updateRedesignAnalysis(
+  projectId: string,
+  redesignId: string,
+  analysis: RoomAnalysis
+): Promise<void> {
+  const project = await getProject(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const entry = project.redesigns.find((r) => r.id === redesignId);
+  if (!entry) throw new Error("Redesign not found");
+
+  entry.roomAnalysis = analysis;
+  project.updatedAt = new Date().toISOString();
+  await saveProject(project);
+}
+
 export async function toggleSuggestionChecked(
   projectId: string,
   suggestionKey: string

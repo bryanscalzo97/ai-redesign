@@ -390,8 +390,11 @@ export function Home() {
           text: "Create & Scan",
           onPress: async (name: string | undefined) => {
             if (name?.trim()) {
-              await createProject(name.trim());
-              router.push("/(tabs)/camera");
+              const project = await createProject(name.trim());
+              router.push({
+                pathname: "/(tabs)/camera",
+                params: { saveToProjectId: project.id },
+              });
             }
           },
         },

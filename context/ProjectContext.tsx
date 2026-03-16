@@ -51,6 +51,11 @@ export interface ProjectContextValue {
     projectId: string,
     suggestionKey: string
   ) => Promise<void>;
+  updateRedesignAnalysis: (
+    projectId: string,
+    redesignId: string,
+    analysis: RoomAnalysis
+  ) => Promise<void>;
 }
 
 export const ProjectContext = createContext<ProjectContextValue>({
@@ -64,6 +69,7 @@ export const ProjectContext = createContext<ProjectContextValue>({
   deleteRedesign: async () => {},
   updateProjectMeta: async () => {},
   toggleSuggestionChecked: async () => {},
+  updateRedesignAnalysis: async () => {},
 });
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
@@ -163,6 +169,14 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [refreshProjects]
   );
 
+  const updateRedesignAnalysis = useCallback(
+    async (projectId: string, redesignId: string, analysis: RoomAnalysis) => {
+      await ProjectStorage.updateRedesignAnalysis(projectId, redesignId, analysis);
+      await refreshProjects();
+    },
+    [refreshProjects]
+  );
+
   return (
     <ProjectContext.Provider
       value={{
@@ -176,6 +190,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         deleteRedesign,
         updateProjectMeta,
         toggleSuggestionChecked,
+        updateRedesignAnalysis,
       }}
     >
       {children}

@@ -81,6 +81,7 @@ export function CameraCapture() {
     prefillStyle?: string;
     prefillGuest?: string;
     prefillRoom?: string;
+    saveToProjectId?: string;
   }>();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
@@ -112,6 +113,8 @@ export function CameraCapture() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedToProject, setSavedToProject] = useState(false);
   const [progressMessage, setProgressMessage] = useState<string | null>(null);
+  const [savedProjectId, setSavedProjectId] = useState<string | null>(null);
+  const [scanNudge, setScanNudge] = useState<string | null>(null);
 
   const roomTypes = Object.keys(ROOM_TYPE_LABELS) as RoomType[];
   const redesignStyles = Object.keys(REDESIGN_STYLE_LABELS) as RedesignStyle[];
@@ -128,6 +131,8 @@ export function CameraCapture() {
       }
     }
   }, [step, isGenerating, generatedImage, error]);
+
+  const autoSaveTriggered = useRef(false);
 
   const resizeAndCompress = useCallback(async (uri: string): Promise<string | null> => {
     const manipulated = await ImageManipulator.manipulateAsync(
@@ -176,6 +181,10 @@ export function CameraCapture() {
     setBudgetLevel(null);
     setListingText(null);
     setSavedToProject(false);
+    setProgressMessage(null);
+    setSavedProjectId(null);
+    setScanNudge(null);
+    autoSaveTriggered.current = false;
     reset();
     setStep("camera");
   }, [reset]);
@@ -205,6 +214,10 @@ export function CameraCapture() {
     setBudgetLevel(null);
     setListingText(null);
     setSavedToProject(false);
+    setProgressMessage(null);
+    setSavedProjectId(null);
+    setScanNudge(null);
+    autoSaveTriggered.current = false;
     reset();
     setStep("camera");
   }, [reset]);
@@ -307,6 +320,20 @@ export function CameraCapture() {
           roomAnalysis: roomAnalysis ?? undefined,
         });
         setSavedToProject(true);
+        setSavedProjectId(projectId);
+
+        // Compute scan nudge
+        const updatedProject = projects.find((p) => p.id === projectId);
+        const currentScanCount = (updatedProject?.redesigns.length ?? 0) + 1;
+        if (currentScanCount < 3) {
+          setScanNudge(
+            `${currentScanCount} room${currentScanCount === 1 ? "" : "s"} scanned — scan ${3 - currentScanCount} more to get your full property score`
+          );
+        } else {
+          setScanNudge(
+            `${currentScanCount} rooms scanned — your property dashboard is ready!`
+          );
+        }
 
         // Show progress message if same room was scanned before
         if (existingProject && roomAnalysis) {
@@ -342,6 +369,24 @@ export function CameraCapture() {
       projects,
     ]
   );
+
+  // Auto-save when coming from Welcome Guide (saveToProjectId param)
+  // Wait for room analysis to finish so the score gets saved
+  useEffect(() => {
+    if (
+      step === "result" &&
+      params.saveToProjectId &&
+      generatedImage &&
+      imageBase64 &&
+      !isAnalyzing &&
+      !savedToProject &&
+      !isSaving &&
+      !autoSaveTriggered.current
+    ) {
+      autoSaveTriggered.current = true;
+      saveToProject(params.saveToProjectId);
+    }
+  }, [step, params.saveToProjectId, generatedImage, imageBase64, isAnalyzing, savedToProject, isSaving, saveToProject]);
 
   // Permission not yet determined
   if (!permission) {
@@ -401,22 +446,62 @@ export function CameraCapture() {
 
           {/* Action buttons */}
           <View style={s.resultActions}>
-            {savedToProject ? (
+            {params.saveToProjectId && !savedToProject && (isAnalyzing || isSaving) ? (
               <View style={s.savedBadge}>
-                <Text type="sm" weight="semibold" style={{ color: "#16A34A" }}>
-                  Saved to property
+                <ActivityIndicator size="small" color="#16A34A" />
+                <Text type="sm" style={{ color: "rgba(255,255,255,0.6)", marginTop: 4 }}>
+                  {isAnalyzing ? "Analyzing room before saving..." : "Saving to property..."}
                 </Text>
-                {progressMessage && (
-                  <Text type="sm" weight="semibold" style={{ color: "#22C55E", marginTop: 4 }}>
-                    {progressMessage}
+              </View>
+            ) : savedToProject ? (
+              <View style={s.savedSection}>
+                <View style={s.savedBadge}>
+                  <Text type="sm" weight="semibold" style={{ color: "#16A34A" }}>
+                    Saved to property
+                  </Text>
+                  {progressMessage && (
+                    <Text type="sm" weight="semibold" style={{ color: "#22C55E", marginTop: 4 }}>
+                      {progressMessage}
+                    </Text>
+                  )}
+                </View>
+                {scanNudge && (
+                  <Text type="sm" style={{ color: "rgba(255,255,255,0.6)", textAlign: "center", marginTop: 8 }}>
+                    {scanNudge}
                   </Text>
                 )}
+                <View style={s.postSaveActions}>
+                  <Button
+                    title="Scan Next Room"
+                    onPress={handleNewScan}
+                    variant="soft"
+                    size="md"
+                    radius="full"
+                    symbol="camera.viewfinder"
+                    style={{ flex: 1 } as any}
+                  />
+                  {savedProjectId && (
+                    <Button
+                      title="View Dashboard"
+                      onPress={() =>
+                        router.push({
+                          pathname: "/(tabs)/redesigns/project-detail",
+                          params: { id: savedProjectId },
+                        })
+                      }
+                      variant="solid"
+                      size="md"
+                      radius="full"
+                      style={{ flex: 1 } as any}
+                    />
+                  )}
+                </View>
               </View>
             ) : (
               <Button
-                title={isSaving ? "Saving..." : "Save to Property"}
+                title={isSaving ? "Saving..." : isAnalyzing ? "Analyzing room..." : "Save to Property"}
                 onPress={handleSaveToProject}
-                disabled={isSaving}
+                disabled={isSaving || isAnalyzing}
                 variant="solid"
                 size="lg"
                 symbol="folder.badge.plus"
@@ -1132,11 +1217,19 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.MD,
     paddingTop: SPACING.MD,
   },
+  savedSection: {
+    gap: 4,
+  },
   savedBadge: {
     backgroundColor: "rgba(22,163,74,0.15)",
     borderRadius: BORDER_RADIUS.FULL,
     paddingVertical: 10,
     alignItems: "center",
+  },
+  postSaveActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8,
   },
   analysisSection: {
     paddingHorizontal: SPACING.MD,
