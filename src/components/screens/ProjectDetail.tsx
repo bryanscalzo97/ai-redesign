@@ -66,6 +66,7 @@ async function readFileAsBase64(uri: string): Promise<string> {
   return btoa(binary);
 }
 
+
 function scoreColor(score: number): string {
   return getScoreCategory(score).bg;
 }
