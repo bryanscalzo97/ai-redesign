@@ -7,6 +7,7 @@ import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export function RedesignDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const insets = useSafeAreaInsets();
@@ -31,7 +33,7 @@ export function RedesignDetail() {
 
   useEffect(() => {
     if (!id) {
-      setError("No redesign ID provided");
+      setError(t("redesignDetail.noIdProvided"));
       setIsLoading(false);
       return;
     }
@@ -45,14 +47,14 @@ export function RedesignDetail() {
         // getAssetInfoAsync gives us the full local URI
         const info = await MediaLibrary.getAssetInfoAsync(id);
         if (!info) {
-          setError("Redesign not found");
+          setError(t("redesignDetail.redesignNotFound"));
           setIsLoading(false);
           return;
         }
         setAsset({ ...assets[0], ...info } as MediaLibrary.Asset);
         setAssetInfo(info);
       } catch {
-        setError("Failed to load redesign");
+        setError(t("redesignDetail.failedToLoad"));
       } finally {
         setIsLoading(false);
       }
@@ -66,28 +68,28 @@ export function RedesignDetail() {
       const { shareAsync } = await import("expo-sharing");
       await shareAsync(assetInfo.localUri || assetInfo.uri, {
         mimeType: "image/png",
-        dialogTitle: "Share your redesign",
+        dialogTitle: t("redesignDetail.shareYourRedesign"),
       });
     } catch (err) {
       if (err instanceof Error && err.message.includes("cancel")) return;
-      Alert.alert("Share failed", "Could not share the image.");
+      Alert.alert(t("redesignResult.shareFailed"), t("redesignResult.couldNotShare"));
     }
   }, [assetInfo]);
 
   const handleDelete = useCallback(async () => {
     if (!id) return;
 
-    Alert.alert("Delete Redesign", "Are you sure? This cannot be undone.", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("redesignDetail.deleteRedesign"), t("redesignDetail.deleteConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("common.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await MediaLibrary.deleteAssetsAsync([id]);
             router.back();
           } catch {
-            Alert.alert("Error", "Failed to delete the redesign.");
+            Alert.alert(t("common.error"), t("redesignDetail.failedToDelete"));
           }
         },
       },
@@ -112,10 +114,10 @@ export function RedesignDetail() {
           darkColor="white"
           style={styles.errorText}
         >
-          {error || "Redesign not found"}
+          {error || t("redesignDetail.redesignNotFound")}
         </Text>
         <Button
-          title="Go Back"
+          title={t("redesignDetail.goBack")}
           onPress={() => router.back()}
           variant="outline"
           size="lg"
@@ -155,7 +157,7 @@ export function RedesignDetail() {
 
       <View style={styles.actions}>
         <Button
-          title="Share"
+          title={t("common.share")}
           onPress={handleShare}
           variant="outline"
           size="lg"
@@ -163,7 +165,7 @@ export function RedesignDetail() {
           style={styles.actionButton}
         />
         <Button
-          title="Delete"
+          title={t("common.delete")}
           onPress={handleDelete}
           variant="outline"
           size="lg"

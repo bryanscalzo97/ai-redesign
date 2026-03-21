@@ -4,6 +4,7 @@ import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { findStyleByKey, findRoomTypeByKey, findGuestTypeByKey } from "@/constants/redesign-data";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTranslation } from "react-i18next";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Dimensions, StyleSheet, View } from "react-native";
@@ -27,6 +28,7 @@ export default function StyleDetailScreen() {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const isDark = colorScheme === "dark";
+  const { t } = useTranslation();
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollViewOffset(scrollRef);
@@ -61,7 +63,7 @@ export default function StyleDetailScreen() {
   if (!data) {
     return (
       <View style={[s.center, { backgroundColor }]}>
-        <Text type="body">Not found</Text>
+        <Text type="body">{t("notFound.message")}</Text>
       </View>
     );
   }
@@ -134,7 +136,7 @@ export default function StyleDetailScreen() {
                 darkColor="white"
                 style={{ marginBottom: 12 }}
               >
-                Inspiration
+                {t("common.inspiration", { defaultValue: "Inspiration" })}
               </Text>
               <View style={s.galleryGrid}>
                 {data.gallery.map((uri, i) => (

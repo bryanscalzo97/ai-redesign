@@ -1,3 +1,4 @@
+import "@/i18n";
 import { DURATION } from "@/constants/designTokens";
 import { AuthContext, AuthProvider } from "@/context/AuthContext";
 import { ProjectProvider } from "@/context/ProjectContext";

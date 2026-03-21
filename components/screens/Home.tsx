@@ -26,6 +26,7 @@ import {
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";
 import { Link, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -124,21 +125,22 @@ function WelcomeGuide({
   onGetStarted: () => void;
 }) {
   const cardBg = isDark ? surface.dark : surface.light;
+  const { t } = useTranslation();
 
   const steps = [
-    { num: "1", label: "Name your property", desc: "Create your first listing" },
-    { num: "2", label: "Scan every room", desc: "Get AI scores and suggestions" },
-    { num: "3", label: "Follow the plan", desc: "Track improvements and ROI" },
+    { num: "1", label: t("home.step1Label"), desc: t("home.step1Desc") },
+    { num: "2", label: t("home.step2Label"), desc: t("home.step2Desc") },
+    { num: "3", label: t("home.step3Label"), desc: t("home.step3Desc") },
   ];
 
   return (
     <View style={s.welcomeSection}>
       <View style={[s.welcomeCard, { backgroundColor: cardBg }]}>
         <Text type="xl" weight="bold" lightColor="black" darkColor="white">
-          Welcome! Let's optimize your first property.
+          {t("home.welcomeTitle")}
         </Text>
         <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.6, lineHeight: 20 }}>
-          In 2 minutes you'll have a score, an action plan, and know exactly how to get more bookings.
+          {t("home.welcomeSubtitle")}
         </Text>
 
         <View style={s.welcomeSteps}>
@@ -162,7 +164,7 @@ function WelcomeGuide({
         </View>
 
         <Button
-          title="Add Your First Property"
+          title={t("home.addFirstProperty")}
           onPress={onGetStarted}
           variant="solid"
           size="lg"
@@ -197,6 +199,7 @@ function PortfolioDashboard({
   onSeeAll: () => void;
 }) {
   const cardBg = isDark ? surface.dark : surface.light;
+  const { t } = useTranslation();
   const PROPERTY_CARD_WIDTH = 140;
 
   return (
@@ -213,7 +216,7 @@ function PortfolioDashboard({
               {summary.overallAverageScore.toFixed(1)}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              Avg Score
+              {t("home.avgScore")}
             </Text>
           </View>
           <View style={s.portfolioStat}>
@@ -221,7 +224,7 @@ function PortfolioDashboard({
               {summary.scannedProperties}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              Properties
+              {t("common.properties")}
             </Text>
           </View>
           <View style={s.portfolioStat}>
@@ -229,7 +232,7 @@ function PortfolioDashboard({
               {summary.totalPendingActions}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              To Do
+              {t("home.toDo")}
             </Text>
           </View>
           <View style={s.portfolioStat}>
@@ -237,7 +240,7 @@ function PortfolioDashboard({
               {formatCompact(summary.totalPendingCost)}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              To Invest
+              {t("home.toInvest")}
             </Text>
           </View>
         </View>
@@ -246,11 +249,11 @@ function PortfolioDashboard({
       {/* Horizontal property cards */}
       <View style={s.sectionHeader}>
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
-          Your Properties
+          {t("home.yourProperties")}
         </Text>
         <Pressable onPress={onSeeAll}>
           <Text type="sm" weight="semibold" style={{ color: "#007AFF" }}>
-            See all
+            {t("home.seeAll")}
           </Text>
         </Pressable>
       </View>
@@ -291,17 +294,17 @@ function PortfolioDashboard({
                 {project.name}
               </Text>
               <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-                {pluralize(score.rooms.length, "room", "rooms")}
+                {score.rooms.length} {score.rooms.length === 1 ? t("common.room") : t("common.rooms")}
               </Text>
               {pending > 0 && (
                 <Text type="caption" style={{ color: "#6366F1" }}>
-                  {pending} to do
+                  {pending} {t("home.todo")}
                 </Text>
               )}
               {index === 0 && summary.properties.length > 1 && (
                 <View style={s.mostPotentialBadge}>
                   <Text type="caption" weight="bold" style={{ color: "#6366F1", fontSize: 10 }}>
-                    Most potential
+                    {t("home.mostPotential")}
                   </Text>
                 </View>
               )}
@@ -317,7 +320,7 @@ function PortfolioDashboard({
           darkColor="white"
           style={{ opacity: 0.4, paddingHorizontal: SPACING.MD }}
         >
-          {summary.totalProperties - summary.scannedProperties} properties not yet scanned
+          {t("home.propertiesNotScanned", { count: summary.totalProperties - summary.scannedProperties })}
         </Text>
       )}
     </View>
@@ -333,6 +336,7 @@ export function Home() {
   const { isAuthenticated } = use(AuthContext);
   const { projects, createProject } = useProjects();
   const { saveCount } = useRedesignCreation();
+  const { t } = useTranslation();
 
   const [recentAssets, setRecentAssets] = useState<MediaLibrary.Asset[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -375,12 +379,12 @@ export function Home() {
 
   const handleFirstProperty = useCallback(() => {
     Alert.prompt(
-      "Your First Property",
-      "What's the name of your property? (e.g. Beach House, Downtown Apt)",
+      t("home.firstPropertyTitle"),
+      t("home.firstPropertyMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Create & Scan",
+          text: t("home.createAndScan"),
           onPress: async (name: string | undefined) => {
             if (name?.trim()) {
               const project = await createProject(name.trim());
@@ -451,10 +455,10 @@ export function Home() {
           style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
         >
           <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-            Improve {portfolio.worstProperty.name}
+            {t("home.improve", { name: portfolio.worstProperty.name })}
           </Text>
           <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-            This property has the most room for improvement
+            {t("home.mostRoomForImprovement")}
           </Text>
         </ScalePress>
       )}
@@ -464,10 +468,10 @@ export function Home() {
           style={[s.heroCta, { backgroundColor: isDark ? "#fff" : "#000" }]}
         >
           <Text type="lg" weight="bold" style={{ color: isDark ? "#000" : "#fff" }}>
-            Scan Your First Room
+            {t("home.scanFirstRoom")}
           </Text>
           <Text type="sm" style={{ color: isDark ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)" }}>
-            Get AI-powered scores and improvement suggestions
+            {t("home.scanFirstRoomDesc")}
           </Text>
         </ScalePress>
       )}
@@ -476,7 +480,7 @@ export function Home() {
       {seasonalProjects.length > 0 && (
         <View style={s.section}>
           <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-            Seasonal Recommendations
+            {t("home.seasonalRecommendations")}
           </Text>
           <ScrollView
             horizontal
@@ -495,7 +499,7 @@ export function Home() {
           style={[s.seasonalPrompt, { backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.03)" }]}
         >
           <Text type="sm" style={{ color: textColor, opacity: 0.6, textAlign: "center" }}>
-            Add location details to your properties for seasonal tips
+            {t("home.addLocationDetails")}
           </Text>
         </Pressable>
       )}
@@ -505,11 +509,11 @@ export function Home() {
         <View style={s.section}>
           <View style={s.sectionHeader}>
             <Text type="lg" weight="bold" style={{ color: textColor }}>
-              Recent Redesigns
+              {t("home.recentRedesigns")}
             </Text>
             <Pressable onPress={() => router.push("/(tabs)/redesigns")}>
               <Text type="sm" weight="semibold" style={{ opacity: 0.5, color: textColor }}>
-                See all
+                {t("home.seeAll")}
               </Text>
             </Pressable>
           </View>
@@ -544,7 +548,7 @@ export function Home() {
       {/* Styles */}
       <View style={s.section}>
         <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-          Top Performing Styles
+          {t("home.topPerformingStyles")}
         </Text>
         <ScrollView
           horizontal
@@ -566,7 +570,7 @@ export function Home() {
       {/* Spaces */}
       <View style={s.section}>
         <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-          Spaces
+          {t("home.spaces")}
         </Text>
         <ScrollView
           horizontal
@@ -588,7 +592,7 @@ export function Home() {
       {/* By Guest Type */}
       <View style={s.section}>
         <Text type="lg" weight="bold" style={{ color: textColor, paddingHorizontal: SPACING.MD }}>
-          By Guest Type
+          {t("home.byGuestType")}
         </Text>
         <ScrollView
           horizontal

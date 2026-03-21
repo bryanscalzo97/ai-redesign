@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Text } from "@/components/ui/Text";
@@ -33,6 +34,7 @@ type CreateRedesignProps = {
 };
 
 export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
@@ -62,9 +64,9 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
-        "Permission required",
-        "Please grant photo library access to select an image.",
-        [{ text: "OK" }, { text: "Open Settings", onPress: () => Linking.openSettings() }]
+        t("camera.permissionRequired"),
+        t("camera.grantPhotoAccess"),
+        [{ text: t("common.ok") }, { text: t("common.openSettings"), onPress: () => Linking.openSettings() }]
       );
       return;
     }
@@ -86,9 +88,9 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
-        "Permission required",
-        "Please grant camera access to take a photo.",
-        [{ text: "OK" }, { text: "Open Settings", onPress: () => Linking.openSettings() }]
+        t("camera.permissionRequired"),
+        t("camera.grantCameraAccess"),
+        [{ text: t("common.ok") }, { text: t("common.openSettings"), onPress: () => Linking.openSettings() }]
       );
       return;
     }
@@ -106,10 +108,10 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
   }, [resizeAndCompress]);
 
   const handleImagePress = useCallback(() => {
-    Alert.alert("Add photo", "Choose a source", [
-      { text: "Camera", onPress: takePhoto },
-      { text: "Gallery", onPress: pickImageFromGallery },
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("camera.addPhoto"), t("camera.chooseSource"), [
+      { text: t("camera.cameraLabel"), onPress: takePhoto },
+      { text: t("camera.gallery"), onPress: pickImageFromGallery },
+      { text: t("common.cancel"), style: "cancel" },
     ]);
   }, [takePhoto, pickImageFromGallery]);
 
@@ -154,7 +156,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
           darkColor="white"
           style={styles.sectionTitle}
         >
-          Room photo
+          {t("camera.roomPhoto")}
         </Text>
         <Pressable onPress={handleImagePress}>
           {imageBase64 ? (
@@ -177,7 +179,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
                 darkColor="white"
                 style={styles.imagePlaceholderText}
               >
-                Tap to add photo (camera or gallery)
+                {t("camera.tapToAddPhoto")}
               </Text>
             </View>
           )}
@@ -192,7 +194,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
           darkColor="white"
           style={styles.sectionTitle}
         >
-          Room type
+          {t("camera.roomType")}
         </Text>
         <ScrollView
           horizontal
@@ -238,7 +240,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
           darkColor="white"
           style={styles.sectionTitle}
         >
-          Redesign style
+          {t("camera.redesignStyle")}
         </Text>
         <ScrollView
           horizontal
@@ -284,10 +286,10 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
           darkColor="white"
           style={styles.sectionTitle}
         >
-          Extra instructions (optional)
+          {t("camera.extraInstructions")}
         </Text>
         <Input
-          placeholder="e.g. more natural light, neutral colors..."
+          placeholder={t("camera.extraInstructionsPlaceholder")}
           value={customInstructions}
           onChangeText={setCustomInstructions}
           multiline
@@ -296,7 +298,7 @@ export function CreateRedesign({ onGenerate }: CreateRedesignProps) {
       </View>
 
       <Button
-        title="Generate"
+        title={t("common.generate")}
         onPress={handleGenerate}
         disabled={!canGenerate}
         variant="solid"

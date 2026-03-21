@@ -7,6 +7,7 @@ import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import { shareBase64Image } from "@/lib/share-image";
 import { Image } from "expo-image";
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePlatform } from "@/hooks/usePlatform";
@@ -31,6 +32,7 @@ export function RedesignResult({
   const { isAndroid } = usePlatform();
   const { top } = useSafeAreaInsets();
   const { notifySave } = useRedesignCreation();
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = useCallback(async () => {
@@ -39,11 +41,11 @@ export function RedesignResult({
     try {
       await saveBase64ToAlbum(generatedImage, "png");
       notifySave();
-      Alert.alert("Saved", "Image saved to your photo library.");
+      Alert.alert(t("redesignResult.saved"), t("redesignResult.savedToLibrary"));
     } catch (err) {
       Alert.alert(
-        "Save failed",
-        err instanceof Error ? err.message : "Could not save the image."
+        t("redesignResult.saveFailed"),
+        err instanceof Error ? err.message : t("redesignResult.couldNotSave")
       );
     } finally {
       setIsSaving(false);
@@ -58,8 +60,8 @@ export function RedesignResult({
       // User cancelled share sheet — not an error
       if (err instanceof Error && err.message.includes("cancel")) return;
       Alert.alert(
-        "Share failed",
-        err instanceof Error ? err.message : "Could not share the image."
+        t("redesignResult.shareFailed"),
+        err instanceof Error ? err.message : t("redesignResult.couldNotShare")
       );
     }
   }, [generatedImage]);
@@ -75,7 +77,7 @@ export function RedesignResult({
           darkColor="white"
           style={styles.loadingText}
         >
-          Redesigning your room...
+          {t("redesignResult.redesigningRoom")}
         </Text>
         <Text
           type="caption"
@@ -84,7 +86,7 @@ export function RedesignResult({
           darkColor="white"
           style={styles.loadingSubtext}
         >
-          This may take a moment
+          {t("redesignResult.mayTakeMoment")}
         </Text>
       </View>
     );
@@ -100,7 +102,7 @@ export function RedesignResult({
           darkColor="white"
           style={styles.errorTitle}
         >
-          Generation Failed
+          {t("redesignResult.generationFailed")}
         </Text>
         <Text
           type="body"
@@ -113,14 +115,14 @@ export function RedesignResult({
         </Text>
         <View style={styles.buttonGroup}>
           <Button
-            title="Try Again"
+            title={t("common.retry")}
             onPress={onRetry}
             variant="solid"
             size="lg"
             symbol="arrow.clockwise"
           />
           <Button
-            title="Start Over"
+            title={t("redesignResult.startOver")}
             onPress={onGenerateAnother}
             variant="outline"
             size="lg"
@@ -146,7 +148,7 @@ export function RedesignResult({
         darkColor="white"
         style={styles.title}
       >
-        Your Redesign is Ready!
+        {t("redesignResult.yourRedesignReady")}
       </Text>
 
       <Image
@@ -158,7 +160,7 @@ export function RedesignResult({
 
       <View style={styles.actionRow}>
         <Button
-          title={isSaving ? "Saving..." : "Save"}
+          title={isSaving ? t("common.saving") : t("common.save")}
           onPress={handleSave}
           disabled={isSaving}
           variant="outline"
@@ -167,7 +169,7 @@ export function RedesignResult({
           style={styles.actionButton}
         />
         <Button
-          title="Share"
+          title={t("common.share")}
           onPress={handleShare}
           variant="outline"
           size="lg"
@@ -177,7 +179,7 @@ export function RedesignResult({
       </View>
 
       <Button
-        title="Generate Another"
+        title={t("redesignResult.generateAnother")}
         onPress={onGenerateAnother}
         variant="solid"
         size="lg"

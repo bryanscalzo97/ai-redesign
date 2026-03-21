@@ -6,6 +6,8 @@ import { useProjects } from "@/context/ProjectContext";
 import { authClient } from "@/lib/auth-client";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { SUPPORTED_LANGUAGES, setLanguage, type SupportedLanguage } from "@/i18n";
+import { useTranslation } from "react-i18next";
 import { Stack, useRouter } from "expo-router";
 import { use } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -110,6 +112,7 @@ export default function ProfileScreen() {
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { t, i18n } = useTranslation();
 
   const handleSignOut = async () => {
     try {
@@ -120,11 +123,26 @@ export default function ProfileScreen() {
   };
 
   const confirmSignOut = () => {
-    Alert.alert("Log out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log out", style: "destructive", onPress: handleSignOut },
+    Alert.alert(t("profile.logOut"), t("profile.logOutConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("profile.logOut"), style: "destructive", onPress: handleSignOut },
     ]);
   };
+
+  const handleLanguageChange = () => {
+    const options = SUPPORTED_LANGUAGES.map((lang) => ({
+      text: `${lang.nativeLabel}${i18n.language === lang.code ? " ✓" : ""}`,
+      onPress: () => setLanguage(lang.code as SupportedLanguage),
+    }));
+    Alert.alert(t("profile.language"), undefined, [
+      ...options,
+      { text: t("common.cancel"), style: "cancel" },
+    ]);
+  };
+
+  const currentLanguage = SUPPORTED_LANGUAGES.find(
+    (l) => l.code === i18n.language
+  );
 
   const displayName = user?.name?.includes("@")
     ? user.name.slice(0, user.name.indexOf("@"))
@@ -135,7 +153,7 @@ export default function ProfileScreen() {
       <Stack.Toolbar placement="left">
         <Stack.Toolbar.View hidesSharedBackground>
           <Text type="title" weight="bold" lightColor="black" darkColor="white">
-            Profile
+            {t("profile.title")}
           </Text>
         </Stack.Toolbar.View>
       </Stack.Toolbar>
@@ -162,7 +180,7 @@ export default function ProfileScreen() {
               darkColor="white"
               style={{ textAlign: "center", marginTop: 16 }}
             >
-              Not signed in
+              {t("profile.notSignedIn")}
             </Text>
             <Text
               type="sm"
@@ -174,10 +192,10 @@ export default function ProfileScreen() {
                 paddingHorizontal: 16,
               }}
             >
-              Sign in to access your account details, subscription info, and personalized features.
+              {t("profile.signInDesc")}
             </Text>
             <Button
-              title="Sign in"
+              title={t("profile.signIn")}
               color="neutral"
               variant="solid"
               radius="full"
@@ -191,24 +209,42 @@ export default function ProfileScreen() {
         {/* Account Section */}
         {isAuthenticated && (
           <View style={s.section}>
-            <SectionHeader title="Account" />
+            <SectionHeader title={t("profile.account")} />
             <SectionCard>
-              <Row label="Name" value={displayName} />
-              <Row label="Email" value={user?.email ?? "—"} isLast />
+              <Row label={t("profile.name")} value={displayName} />
+              <Row label={t("profile.email")} value={user?.email ?? "—"} isLast />
             </SectionCard>
           </View>
         )}
 
+        {/* Settings Section */}
+        <View style={s.section}>
+          <SectionHeader title={t("profile.settings")} />
+          <SectionCard>
+            <Pressable onPress={handleLanguageChange} style={s.linkRow}>
+              <Text type="default" lightColor="black" darkColor="white">
+                {t("profile.language")}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text type="default" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)" }}>
+                  {currentLanguage?.nativeLabel ?? "English"}
+                </Text>
+                <Icon symbol="chevron.right" size="xs" color={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"} />
+              </View>
+            </Pressable>
+          </SectionCard>
+        </View>
+
         {/* Legal Section */}
         <View style={s.section}>
-          <SectionHeader title="Legal" />
+          <SectionHeader title={t("profile.legal")} />
           <SectionCard>
             <LinkRow
-              title="Privacy Policy"
+              title={t("profile.privacyPolicy")}
               onPress={() => router.push("/privacy-policy")}
             />
             <LinkRow
-              title="Terms of Service"
+              title={t("profile.termsOfService")}
               onPress={() => router.push("/terms-of-service")}
               isLast
             />
@@ -221,7 +257,7 @@ export default function ProfileScreen() {
             <SectionCard>
               <Pressable onPress={confirmSignOut} style={s.logoutRow}>
                 <Text type="default" weight="medium" style={{ color: "#ef4444" }}>
-                  Log out
+                  {t("profile.logOut")}
                 </Text>
               </Pressable>
             </SectionCard>
@@ -231,23 +267,23 @@ export default function ProfileScreen() {
         {/* Data Management */}
         {projects.length > 0 && (
           <View style={s.section}>
-            <SectionHeader title="Data" />
+            <SectionHeader title={t("profile.data")} />
             <SectionCard>
               <Pressable
                 onPress={() => {
                   Alert.alert(
-                    "Delete All Data",
-                    `This will permanently delete all ${projects.length} properties and their room scans. This cannot be undone.`,
+                    t("profile.deleteAllData"),
+                    t("profile.deleteAllDataConfirm", { count: projects.length }),
                     [
-                      { text: "Cancel", style: "cancel" },
+                      { text: t("common.cancel"), style: "cancel" },
                       {
-                        text: "Delete Everything",
+                        text: t("projectDetail.deleteEverything"),
                         style: "destructive",
                         onPress: async () => {
                           for (const p of projects) {
                             await deleteProject(p.id);
                           }
-                          Alert.alert("Done", "All data has been deleted.");
+                          Alert.alert(t("common.done"), t("profile.allDataDeleted"));
                         },
                       },
                     ]
@@ -256,7 +292,10 @@ export default function ProfileScreen() {
                 style={s.logoutRow}
               >
                 <Text type="default" weight="medium" style={{ color: "#ef4444" }}>
-                  Delete all data ({projects.length} {projects.length === 1 ? "property" : "properties"})
+                  {t("profile.deleteAllDataButton", {
+                    count: projects.length,
+                    properties: projects.length === 1 ? t("common.property") : t("common.properties"),
+                  })}
                 </Text>
               </Pressable>
             </SectionCard>

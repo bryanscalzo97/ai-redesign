@@ -8,6 +8,7 @@ import * as MediaLibrary from "expo-media-library";
 import { useRouter } from "expo-router";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Dimensions,
@@ -27,6 +28,7 @@ const itemSize =
 type PermissionState = "loading" | "undetermined" | "denied" | "granted";
 
 export function RedesignHistory() {
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const router = useRouter();
@@ -129,10 +131,10 @@ export function RedesignHistory() {
           darkColor="white"
           style={styles.messageText}
         >
-          Allow access to your photos to see your saved redesigns.
+          {t("redesignHistory.allowPhotoAccess")}
         </Text>
         <Button
-          title="Allow Access"
+          title={t("redesignHistory.allowAccess")}
           onPress={requestPermission}
           variant="solid"
           size="lg"
@@ -152,8 +154,7 @@ export function RedesignHistory() {
           darkColor="white"
           style={styles.messageText}
         >
-          Photo access is required to view your redesigns. Please enable it in
-          Settings.
+          {t("redesignHistory.photoAccessRequired")}
         </Text>
       </View>
     );
@@ -170,7 +171,7 @@ export function RedesignHistory() {
           darkColor="white"
           style={styles.messageText}
         >
-          No redesigns yet
+          {t("redesignHistory.noRedesignsYet")}
         </Text>
         <Text
           type="caption"
@@ -179,7 +180,7 @@ export function RedesignHistory() {
           darkColor="white"
           style={styles.messageSubtext}
         >
-          Your saved redesigns will appear here.
+          {t("redesignHistory.savedRedesignsHere")}
         </Text>
       </View>
     );

@@ -1,10 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { RegionPicker } from "@/components/RegionPicker";
 import { Button } from "@/components/ui/Button";
 import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
-import { HOST_INSIGHTS } from "@/constants/host-insights";
 import { REGION_LABELS } from "@/constants/seasonal-tips";
 import {
   surface,
@@ -29,8 +29,6 @@ import {
   type RoomGroup,
 } from "@/lib/progress-tracking";
 import {
-  REDESIGN_STYLE_LABELS,
-  ROOM_TYPE_LABELS,
   GUEST_TYPE_LABELS,
 } from "@/types/redesign";
 import type { Project, RedesignEntry } from "@/types/project";
@@ -98,6 +96,7 @@ function RedesignCard({
   entry: RedesignEntry;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <ScalePress onPress={onPress}>
       <View>
@@ -129,8 +128,8 @@ function RedesignCard({
         style={{ marginTop: 4, opacity: 0.6 }}
         numberOfLines={1}
       >
-        {(REDESIGN_STYLE_LABELS as any)[entry.style] || entry.style} ·{" "}
-        {(ROOM_TYPE_LABELS as any)[entry.roomType] || entry.roomType}
+        {t(`redesignStyles.${entry.style}`)} ·{" "}
+        {t(`roomTypes.${entry.roomType}`)}
       </Text>
     </ScalePress>
   );
@@ -149,6 +148,7 @@ function RedesignExpandedView({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { updateRedesignListingText, updateRedesignAnalysis } = useProjects();
   const [listingText, setListingText] = useState(entry.listingText || "");
   const [isGeneratingText, setIsGeneratingText] = useState(false);
@@ -171,7 +171,7 @@ function RedesignExpandedView({
       }
 
       if (!imageBase64) {
-        Alert.alert("Error", "Could not read room image for analysis");
+        Alert.alert(t("common.error"), t("projectDetail.couldNotReadImage"));
         return;
       }
 
@@ -189,15 +189,15 @@ function RedesignExpandedView({
       if (data.success && data.analysis) {
         await updateRedesignAnalysis(projectId, entry.id, data.analysis);
         Alert.alert(
-          "Analysis Complete",
-          `Room scored ${data.analysis.score.toFixed(1)}/10 with ${data.analysis.suggestions?.length ?? 0} suggestions.`,
-          [{ text: "OK", onPress: onClose }]
+          t("projectDetail.analysisComplete"),
+          t("projectDetail.analysisCompleteMsg", { score: data.analysis.score.toFixed(1), count: data.analysis.suggestions?.length ?? 0 }),
+          [{ text: t("common.ok"), onPress: onClose }]
         );
       } else {
-        Alert.alert("Error", data.error || "Failed to analyze room");
+        Alert.alert(t("common.error"), data.error || t("projectDetail.failedAnalyze"));
       }
     } catch {
-      Alert.alert("Error", "Failed to connect to the server");
+      Alert.alert(t("common.error"), t("projectDetail.failedConnect"));
     } finally {
       setIsAnalyzing(false);
     }
@@ -229,10 +229,10 @@ function RedesignExpandedView({
         setListingText(data.listingText);
         await updateRedesignListingText(projectId, entry.id, data.listingText);
       } else {
-        Alert.alert("Error", data.error || "Failed to generate listing text");
+        Alert.alert(t("common.error"), data.error || t("projectDetail.failedListingText"));
       }
     } catch {
-      Alert.alert("Error", "Failed to connect to the server");
+      Alert.alert(t("common.error"), t("projectDetail.failedConnect"));
     } finally {
       setIsGeneratingText(false);
     }
@@ -265,7 +265,7 @@ function RedesignExpandedView({
 
       <View style={s.expandedInfo}>
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
-          {(REDESIGN_STYLE_LABELS as any)[entry.style] || entry.style}
+          {t(`redesignStyles.${entry.style}`)}
         </Text>
         <Text
           type="sm"
@@ -273,7 +273,7 @@ function RedesignExpandedView({
           darkColor="white"
           style={{ opacity: 0.5 }}
         >
-          {(ROOM_TYPE_LABELS as any)[entry.roomType] || entry.roomType} ·{" "}
+          {t(`roomTypes.${entry.roomType}`)} ·{" "}
           {new Date(entry.createdAt).toLocaleDateString()}
         </Text>
       </View>
@@ -282,7 +282,7 @@ function RedesignExpandedView({
       <View style={s.rescanSection}>
         {!entry.roomAnalysis && (
           <Button
-            title={isAnalyzing ? "Analyzing..." : "Analyze This Room"}
+            title={isAnalyzing ? t("projectDetail.analyzing") : t("projectDetail.analyzeThisRoom")}
             onPress={handleAnalyze}
             disabled={isAnalyzing}
             variant="solid"
@@ -291,7 +291,7 @@ function RedesignExpandedView({
           />
         )}
         <Button
-          title={`Re-scan this ${(ROOM_TYPE_LABELS as any)[entry.roomType] || "room"}`}
+          title={t("projectDetail.rescan", { room: t(`roomTypes.${entry.roomType}`) })}
           onPress={handleRescan}
           variant="soft"
           size="md"
@@ -301,7 +301,7 @@ function RedesignExpandedView({
 
       {/* Listing text section */}
       <View style={s.textSection}>
-        <InsightBanner text={HOST_INSIGHTS.description} isDark={isDark} />
+        <InsightBanner text={t("hostInsights.description")} isDark={isDark} />
         {listingText ? (
           <>
             <View style={s.textHeader}>
@@ -311,7 +311,7 @@ function RedesignExpandedView({
                 lightColor="black"
                 darkColor="white"
               >
-                Listing Description
+                {t("projectDetail.listingDescription")}
               </Text>
               <Pressable onPress={handleShare}>
                 <Text
@@ -319,7 +319,7 @@ function RedesignExpandedView({
                   weight="semibold"
                   style={{ color: isDark ? accent.dark : accent.light }}
                 >
-                  Share
+                  {t("common.share")}
                 </Text>
               </Pressable>
             </View>
@@ -333,7 +333,7 @@ function RedesignExpandedView({
               {listingText}
             </Text>
             <Button
-              title="Regenerate"
+              title={t("common.regenerate")}
               onPress={handleGenerateText}
               variant="soft"
               size="md"
@@ -352,12 +352,12 @@ function RedesignExpandedView({
                   darkColor="white"
                   style={{ opacity: 0.6 }}
                 >
-                  Writing listing description...
+                  {t("projectDetail.writingDescription")}
                 </Text>
               </View>
             ) : (
               <Button
-                title="Generate Listing Description"
+                title={t("projectDetail.generateDescription")}
                 onPress={handleGenerateText}
                 variant="solid"
                 size="lg"
@@ -369,7 +369,7 @@ function RedesignExpandedView({
       </View>
 
       <Button
-        title="Back to property"
+        title={t("projectDetail.backToProperty")}
         onPress={onClose}
         variant="soft"
         size="md"
@@ -391,6 +391,7 @@ function DashboardScoreCard({
   roomCount: number;
   isDark: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <View
       style={[
@@ -400,7 +401,7 @@ function DashboardScoreCard({
         },
       ]}
     >
-      <InsightBanner text={HOST_INSIGHTS.score} isDark={isDark} />
+      <InsightBanner text={t("hostInsights.score")} isDark={isDark} />
       <View style={s.scoreCenter}>
         <Text
           type="5xl"
@@ -421,7 +422,7 @@ function DashboardScoreCard({
           type="caption"
           style={{ color: isDark ? textMuted.dark : textMuted.light }}
         >
-          Based on {roomCount} {roomCount === 1 ? "room" : "rooms"} scanned
+          {t("projectDetail.basedOnRooms", { count: roomCount, rooms: roomCount === 1 ? t("common.room") : t("common.rooms") })}
         </Text>
       </View>
     </View>
@@ -530,16 +531,17 @@ function ROICard({
   projectId: string;
   isDark: boolean;
 }) {
+  const { t } = useTranslation();
   const { updateProjectMeta } = useProjects();
 
   const handleSetRate = useCallback(() => {
     Alert.prompt(
-      "Nightly Rate",
-      "Enter your average nightly rate ($)",
+      t("projectDetail.nightlyRate"),
+      t("projectDetail.enterNightlyRate"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Save",
+          text: t("common.save"),
           onPress: (val: string | undefined) => {
             const rate = Number(val);
             if (rate > 0) {
@@ -556,12 +558,12 @@ function ROICard({
 
   const handleSetOccupancy = useCallback(() => {
     Alert.prompt(
-      "Current Occupancy",
-      "Enter your average occupancy rate (%)",
+      t("projectDetail.currentOccupancy"),
+      t("projectDetail.enterOccupancy"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Save",
+          text: t("common.save"),
           onPress: (val: string | undefined) => {
             const pct = Number(val);
             if (pct > 0 && pct <= 100) {
@@ -591,7 +593,7 @@ function ROICard({
     >
       <View style={s.actionPlanHeader}>
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
-          ROI Estimate
+          {t("projectDetail.roiEstimate")}
         </Text>
       </View>
 
@@ -599,15 +601,15 @@ function ROICard({
       <View style={s.roiInputRow}>
         <Pressable onPress={handleSetRate} style={s.roiInputChip}>
           <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-            Rate
+            {t("projectDetail.rate")}
           </Text>
           <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
-            {nightlyRate ? `$${nightlyRate}/night` : "Set"}
+            {nightlyRate ? `$${nightlyRate}/night` : t("common.set")}
           </Text>
         </Pressable>
         <Pressable onPress={handleSetOccupancy} style={s.roiInputChip}>
           <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-            Occupancy
+            {t("projectDetail.occupancy")}
           </Text>
           <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
             {occupancyPercent ? `${occupancyPercent}%` : "50%"}
@@ -622,7 +624,7 @@ function ROICard({
               +{roi.bookingLiftPercent}%
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              More bookings
+              {t("projectDetail.moreBookings")}
             </Text>
           </View>
           <View style={s.roiItem}>
@@ -630,7 +632,7 @@ function ROICard({
               +${roi.extraMonthlyRevenue}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              Extra / month
+              {t("projectDetail.extraPerMonth")}
             </Text>
           </View>
           <View style={s.roiItem}>
@@ -638,7 +640,7 @@ function ROICard({
               {roi.paybackWeeks}w
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              Payback
+              {t("projectDetail.payback")}
             </Text>
           </View>
           <View style={s.roiItem}>
@@ -646,15 +648,15 @@ function ROICard({
               ${roi.investmentCost}
             </Text>
             <Text type="caption" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
-              To invest
+              {t("projectDetail.toInvest")}
             </Text>
           </View>
         </View>
       ) : (
         <Text type="sm" lightColor="black" darkColor="white" style={{ opacity: 0.5 }}>
           {nightlyRate
-            ? "Not enough data to estimate ROI yet."
-            : "Set your nightly rate to see estimated ROI for improvements."}
+            ? t("projectDetail.noRoiData")
+            : t("projectDetail.setRateForRoi")}
         </Text>
       )}
     </View>
@@ -681,6 +683,7 @@ function ActionPlanCard({
   propertyName: string;
   isDark: boolean;
 }) {
+  const { t } = useTranslation();
   const { toggleSuggestionChecked } = useProjects();
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
 
@@ -724,14 +727,14 @@ function ActionPlanCard({
         },
       ]}
     >
-      <InsightBanner text={HOST_INSIGHTS.actionPlan} isDark={isDark} />
+      <InsightBanner text={t("hostInsights.actionPlan")} isDark={isDark} />
       <View style={s.actionPlanHeader}>
         <Text type="body" weight="bold" lightColor="black" darkColor="white">
-          Action Plan
+          {t("projectDetail.actionPlan")}
         </Text>
         <Pressable onPress={handleExport}>
           <Text type="sm" weight="semibold" style={{ color: isDark ? accent.dark : accent.light }}>
-            Share
+            {t("common.share")}
           </Text>
         </Pressable>
       </View>
@@ -806,9 +809,8 @@ function RoomGroupHeader({
   group: RoomGroup;
   isDark: boolean;
 }) {
-  const label =
-    (ROOM_TYPE_LABELS as Record<string, string>)[group.roomType] ||
-    group.roomType;
+  const { t } = useTranslation();
+  const label = t(`roomTypes.${group.roomType}`);
   const scanCount = group.entries.length;
 
   return (
@@ -854,6 +856,7 @@ function RoomGroupHeader({
 export function ProjectDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
@@ -925,12 +928,12 @@ export function ProjectDetail() {
   const handleDelete = useCallback(() => {
     if (!project) return;
     Alert.alert(
-      "Delete Property",
-      `Delete "${project.name}" and all its redesigns?`,
+      t("projectDetail.deleteProperty"),
+      t("projectDetail.deleteConfirm", { name: project.name }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             await deleteProject(project.id);
@@ -1080,7 +1083,7 @@ export function ProjectDetail() {
       )}
 
       <Button
-        title="Scan a Room"
+        title={t("projectDetail.scanNewRoom")}
         onPress={() =>
           router.push({
             pathname: "/(tabs)/camera",
@@ -1175,7 +1178,7 @@ export function ProjectDetail() {
             darkColor="white"
             style={{ textAlign: "center", opacity: 0.5 }}
           >
-            No rooms scanned yet. Scan a space to get started.
+            {t("projectDetail.noRoomsTitle")}
           </Text>
         </View>
       ) : roomGroups.length > 0 ? (
@@ -1290,7 +1293,7 @@ export function ProjectDetail() {
               </Text>
               <View style={s.seasonalTags}>
                 <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
-                  <Text type="caption" lightColor="black" darkColor="white">{REDESIGN_STYLE_LABELS[recommendation.styles[0]]}</Text>
+                  <Text type="caption" lightColor="black" darkColor="white">{t(`redesignStyles.${recommendation.styles[0]}`)}</Text>
                 </View>
                 <View style={[s.seasonalTag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
                   <Text type="caption" lightColor="black" darkColor="white">{GUEST_TYPE_LABELS[recommendation.guestType]}</Text>
@@ -1325,7 +1328,7 @@ export function ProjectDetail() {
 
       <Pressable onPress={handleDelete} style={s.deleteButton}>
         <Text type="sm" weight="semibold" style={{ color: "#DC2626" }}>
-          Delete Property
+          {t("projectDetail.deleteProperty")}
         </Text>
       </Pressable>
 

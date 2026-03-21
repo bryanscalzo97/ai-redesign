@@ -1,10 +1,12 @@
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { usePlatform } from "@/hooks/usePlatform";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function About() {
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const { isAndroid } = usePlatform();
@@ -26,16 +28,7 @@ export function About() {
               opacity: 0.6,
             }}
           >
-            Starter Kit is a thoughtfully crafted, highly customizable mobile
-            app foundation built with React Native and Expo.
-            {"\n"}
-            {"\n"}
-            Accelerate your development process with a modern architecture, best
-            practices, and a beautiful UI out of the box—so you can focus on
-            building features that matter.
-            {"\n"}
-            {"\n"}
-            Created with ❤️ by Code with Beto Team.
+            {t("about.description")}
           </Text>
         </View>
       </View>

@@ -4,6 +4,7 @@ import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { AuthContext } from "@/context/AuthContext";
 import { use, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
 
 const STEPS = [
@@ -27,9 +28,12 @@ const STEPS = [
 export function Onboarding() {
   const { setIsOnboarded } = use(AuthContext);
   const [step, setStep] = useState(0);
+  const { t } = useTranslation();
 
-  const isLast = step === STEPS.length - 1;
-  const current = STEPS[step];
+  const steps = t("onboarding.steps", { returnObjects: true }) as Array<{ title: string; subtitle: string }>;
+
+  const isLast = step === steps.length - 1;
+  const current = steps[step];
 
   return (
     <View style={styles.container}>
@@ -43,7 +47,7 @@ export function Onboarding() {
         <View style={styles.content}>
           {/* Step indicators */}
           <View style={styles.dots}>
-            {STEPS.map((_, i) => (
+            {steps.map((_, i) => (
               <View
                 key={i}
                 style={[
@@ -56,7 +60,7 @@ export function Onboarding() {
           </View>
 
           <Text type="caption" weight="semibold" style={styles.stepLabel}>
-            Step {step + 1} of {STEPS.length}
+            {t("onboarding.stepOf", { current: step + 1, total: steps.length })}
           </Text>
 
           <Text type="4xl" weight="semibold" style={styles.title}>
@@ -68,7 +72,7 @@ export function Onboarding() {
 
           {isLast ? (
             <Button
-              title="Get started"
+              title={t("onboarding.getStarted")}
               color="neutral"
               variant="solid"
               radius="full"
@@ -79,7 +83,7 @@ export function Onboarding() {
           ) : (
             <View style={styles.actions}>
               <Button
-                title="Next"
+                title={t("common.next")}
                 color="neutral"
                 variant="solid"
                 radius="full"
@@ -92,7 +96,7 @@ export function Onboarding() {
                 style={styles.skipButton}
               >
                 <Text type="sm" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
-                  Skip
+                  {t("common.skip")}
                 </Text>
               </Pressable>
             </View>

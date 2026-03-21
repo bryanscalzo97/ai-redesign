@@ -43,36 +43,30 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 
 type CameraStep = "camera" | "options" | "generating" | "result";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 
-const LOADING_MESSAGES = [
-  "Staging your listing...",
-  "Optimizing for bookings...",
-  "Styling the space...",
-  "Picking the perfect palette...",
-  "Arranging furniture for photos...",
-  "Adding finishing touches...",
-  "Maximizing guest appeal...",
-  "Almost ready to list...",
-];
+// Loading messages are now i18n-driven via camera.loadingMessages
 
 function LoadingMessages() {
+  const { t } = useTranslation();
+  const messages = t("camera.loadingMessages", { returnObjects: true }) as string[];
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % LOADING_MESSAGES.length);
+      setIndex((prev) => (prev + 1) % messages.length);
     }, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [messages.length]);
 
   return (
     <Text type="lg" weight="semibold" style={{ color: "#fff", textAlign: "center" }}>
-      {LOADING_MESSAGES[index]}
+      {messages[index]}
     </Text>
   );
 }
@@ -108,6 +102,7 @@ export function CameraCapture() {
   );
   const [customInstructions, setCustomInstructions] = useState("");
   const [budgetLevel, setBudgetLevel] = useState<BudgetLevel | null>(null);
+  const { t } = useTranslation();
 
   // Result state
   const [listingText, setListingText] = useState<string | null>(null);
@@ -275,10 +270,10 @@ export function CameraCapture() {
       if (data.success && data.listingText) {
         setListingText(data.listingText);
       } else {
-        Alert.alert("Error", data.error || "Failed to generate listing text");
+        Alert.alert(t("common.error"), data.error || t("camera.failedToSave"));
       }
     } catch {
-      Alert.alert("Error", "Failed to connect to the server");
+      Alert.alert(t("common.error"), t("camera.failedToSave"));
     } finally {
       setIsGeneratingText(false);
     }
@@ -293,24 +288,24 @@ export function CameraCapture() {
   // ── Save to project ──
   const handleSaveToProject = useCallback(() => {
     const options = projects.map((p) => p.name);
-    options.push("New Property...");
-    options.push("Cancel");
+    options.push(t("camera.newPropertyDots"));
+    options.push(t("common.cancel"));
 
-    Alert.alert("Save to Property", "Choose a property for this redesign", [
+    Alert.alert(t("camera.saveToProperty"), t("camera.chooseProperty"), [
       ...projects.map((p) => ({
         text: p.name,
         onPress: () => saveToProject(p.id),
       })),
       {
-        text: "New Property...",
+        text: t("camera.newPropertyDots"),
         onPress: () => {
           Alert.prompt(
-            "New Property",
-            "Enter a name for your property",
+            t("projectList.newProperty"),
+            t("camera.enterPropertyName"),
             [
-              { text: "Cancel", style: "cancel" },
+              { text: t("common.cancel"), style: "cancel" },
               {
-                text: "Create & Save",
+                text: t("camera.createAndSave"),
                 onPress: async (name: string | undefined) => {
                   if (name?.trim()) {
                     const project = await createProject(name.trim());
@@ -323,9 +318,9 @@ export function CameraCapture() {
           );
         },
       },
-      { text: "Cancel", style: "cancel" },
+      { text: t("common.cancel"), style: "cancel" },
     ]);
-  }, [projects, createProject, imageBase64, generatedImage, roomType, style, guestType, customInstructions, listingText]);
+  }, [projects, createProject, imageBase64, generatedImage, roomType, style, guestType, customInstructions, listingText, t]);
 
   const saveToProject = useCallback(
     async (projectId: string) => {
@@ -377,7 +372,7 @@ export function CameraCapture() {
           }
         }
       } catch (err) {
-        Alert.alert("Error", "Failed to save redesign");
+        Alert.alert(t("common.error"), t("camera.failedToSave"));
       } finally {
         setIsSaving(false);
       }
@@ -425,23 +420,23 @@ export function CameraCapture() {
       <View style={[s.container, s.centered]}>
         <Icon symbol="camera.fill" size="xl" color="#fff" />
         <Text type="subtitle" weight="semibold" style={s.permissionText}>
-          Camera access needed
+          {t("camera.cameraAccessNeeded")}
         </Text>
         <Text type="body" weight="normal" style={s.permissionSubtext}>
-          Allow camera access to scan your space and optimize your listing photos.
+          {t("camera.cameraAccessDesc")}
         </Text>
         <Button
-          title="Allow Camera"
+          title={t("camera.allowCamera")}
           onPress={() => {
             if (permission.canAskAgain) {
               requestPermission();
             } else {
               Alert.alert(
-                "Camera access",
-                "Open Settings to enable camera access.",
+                t("camera.cameraAccessSettings"),
+                t("camera.cameraAccessSettingsMsg"),
                 [
-                  { text: "Cancel", style: "cancel" },
-                  { text: "Open Settings", onPress: () => Linking.openSettings() },
+                  { text: t("common.cancel"), style: "cancel" },
+                  { text: t("common.openSettings"), onPress: () => Linking.openSettings() },
                 ]
               );
             }
@@ -476,14 +471,14 @@ export function CameraCapture() {
               <View style={s.savedBadge}>
                 <ActivityIndicator size="small" color="#16A34A" />
                 <Text type="sm" style={{ color: "rgba(255,255,255,0.6)", marginTop: 4 }}>
-                  {isAnalyzing ? "Analyzing room before saving..." : "Saving to property..."}
+                  {isAnalyzing ? t("camera.analyzingBeforeSaving") : t("camera.savingToProperty")}
                 </Text>
               </View>
             ) : savedToProject ? (
               <View style={s.savedSection}>
                 <View style={s.savedBadge}>
                   <Text type="sm" weight="semibold" style={{ color: "#16A34A" }}>
-                    Saved to property
+                    {t("camera.savedToProperty")}
                   </Text>
                   {progressMessage && (
                     <Text type="sm" weight="semibold" style={{ color: "#22C55E", marginTop: 4 }}>
@@ -498,7 +493,7 @@ export function CameraCapture() {
                 )}
                 <View style={s.postSaveActions}>
                   <Button
-                    title="Scan Next Room"
+                    title={t("camera.scanNextRoom")}
                     onPress={handleNewScan}
                     variant="soft"
                     size="md"
@@ -508,7 +503,7 @@ export function CameraCapture() {
                   />
                   {savedProjectId && (
                     <Button
-                      title="View Dashboard"
+                      title={t("camera.viewDashboard")}
                       onPress={() =>
                         router.push({
                           pathname: "/(tabs)/redesigns/project-detail",
@@ -525,7 +520,7 @@ export function CameraCapture() {
               </View>
             ) : (
               <Button
-                title={isSaving ? "Saving..." : isAnalyzing ? "Analyzing room..." : "Save to Property"}
+                title={isSaving ? t("common.saving") : isAnalyzing ? t("projectDetail.analyzing") : t("camera.saveToProperty")}
                 onPress={handleSaveToProject}
                 disabled={isSaving || isAnalyzing}
                 variant="solid"
@@ -538,7 +533,7 @@ export function CameraCapture() {
           {/* Room Analysis */}
           <View style={s.analysisSection}>
             <Text type="lg" weight="bold" lightColor="white" darkColor="white">
-              Your Room Analysis
+              {t("camera.yourRoomAnalysis")}
             </Text>
             <Text type="caption" style={{ color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
               💡 {HOST_INSIGHTS.score}
@@ -548,7 +543,7 @@ export function CameraCapture() {
               <View style={s.generatingTextRow}>
                 <ActivityIndicator size="small" color="#fff" />
                 <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  Analyzing your space...
+                  {t("camera.analyzingSpace")}
                 </Text>
               </View>
             ) : roomAnalysis ? (
@@ -556,7 +551,7 @@ export function CameraCapture() {
                 <View style={s.scoresContainer}>
                   <View style={s.scoreCard}>
                     <Text type="caption" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
-                      Before
+                      {t("common.before")}
                     </Text>
                     <Text
                       type="title"
@@ -577,7 +572,7 @@ export function CameraCapture() {
                       </Text>
                       <View style={s.scoreCard}>
                         <Text type="caption" weight="semibold" style={{ color: "rgba(255,255,255,0.5)" }}>
-                          After
+                          {t("common.after")}
                         </Text>
                         <Text
                           type="title"
@@ -605,7 +600,7 @@ export function CameraCapture() {
                 {roomAnalysis.issues.length > 0 && (
                   <View style={s.issuesList}>
                     <Text type="sm" weight="semibold" style={{ color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>
-                      Issues Detected
+                      {t("camera.issuesDetected")}
                     </Text>
                     {roomAnalysis.issues.map((issue, i) => (
                       <View key={i} style={s.issueRow}>
@@ -620,7 +615,7 @@ export function CameraCapture() {
               </>
             ) : (
               <Text type="sm" style={{ color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
-                Analysis unavailable
+                {t("camera.analysisUnavailable")}
               </Text>
             )}
           </View>
@@ -629,14 +624,14 @@ export function CameraCapture() {
           {(isAnalyzing || (roomAnalysis && roomAnalysis.suggestions.length > 0)) && (
             <View style={s.analysisSection}>
               <Text type="lg" weight="bold" lightColor="white" darkColor="white">
-                Recommended Improvements
+                {t("camera.recommendedImprovements")}
               </Text>
 
               {isAnalyzing ? (
                 <View style={s.generatingTextRow}>
                   <ActivityIndicator size="small" color="#fff" />
                   <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                    Generating suggestions...
+                    {t("camera.generatingSuggestions")}
                   </Text>
                 </View>
               ) : roomAnalysis ? (
@@ -644,7 +639,7 @@ export function CameraCapture() {
                   {(["add", "remove", "move", "replace"] as const).map((action) => {
                     const items = roomAnalysis.suggestions.filter((sg) => sg.action === action);
                     if (items.length === 0) return null;
-                    const actionLabel = action === "add" ? "Add" : action === "remove" ? "Remove" : action === "move" ? "Move" : "Replace";
+                    const actionLabel = action === "add" ? t("camera.actionAdd") : action === "remove" ? t("camera.actionRemove") : action === "move" ? t("camera.actionMove") : t("camera.actionReplace");
                     const actionIcon = action === "add" ? "+" : action === "remove" ? "−" : action === "move" ? "↔" : "⟳";
                     return (
                       <View key={action} style={s.suggestionGroup}>
@@ -674,7 +669,7 @@ export function CameraCapture() {
           {/* Listing text */}
           <View style={s.listingTextSection}>
             <Text type="lg" weight="bold" lightColor="white" darkColor="white">
-              Listing Description
+              {t("camera.listingDescription")}
             </Text>
             <Text type="caption" style={{ color: "rgba(255,255,255,0.4)", fontStyle: "italic" }}>
               💡 {HOST_INSIGHTS.description}
@@ -691,14 +686,14 @@ export function CameraCapture() {
                 </Text>
                 <View style={s.textActions}>
                   <Button
-                    title="Share"
+                    title={t("common.share")}
                     onPress={handleShareText}
                     variant="soft"
                     size="md"
                     style={{ flex: 1 } as any}
                   />
                   <Button
-                    title="Regenerate"
+                    title={t("common.regenerate")}
                     onPress={handleGenerateListingText}
                     variant="soft"
                     size="md"
@@ -711,12 +706,12 @@ export function CameraCapture() {
               <View style={s.generatingTextRow}>
                 <ActivityIndicator size="small" color="#fff" />
                 <Text type="sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                  Writing listing description...
+                  {t("camera.generatingText")}
                 </Text>
               </View>
             ) : (
               <Button
-                title="Generate Listing Description"
+                title={t("camera.generateListingText")}
                 onPress={handleGenerateListingText}
                 variant="soft"
                 size="lg"
@@ -817,7 +812,7 @@ export function CameraCapture() {
           {/* Room type */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Space type
+              {t("camera.roomType")}
             </Text>
             <ScrollView
               horizontal
@@ -837,7 +832,7 @@ export function CameraCapture() {
                       weight={selected ? "semibold" : "normal"}
                       style={{ color: "#fff" }}
                     >
-                      {ROOM_TYPE_LABELS[key]}
+                      {t(`roomTypes.${key}`)}
                     </Text>
                   </Pressable>
                 );
@@ -848,7 +843,7 @@ export function CameraCapture() {
           {/* Style */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Listing style
+              {t("camera.redesignStyle")}
             </Text>
             <ScrollView
               horizontal
@@ -868,7 +863,7 @@ export function CameraCapture() {
                       weight={selected ? "semibold" : "normal"}
                       style={{ color: "#fff" }}
                     >
-                      {REDESIGN_STYLE_LABELS[key]}
+                      {t(`redesignStyles.${key}`)}
                     </Text>
                   </Pressable>
                 );
@@ -879,7 +874,7 @@ export function CameraCapture() {
           {/* Guest type (optional) */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Target guest (optional)
+              {t("camera.guestType")}
             </Text>
             <ScrollView
               horizontal
@@ -899,7 +894,7 @@ export function CameraCapture() {
                       weight={selected ? "semibold" : "normal"}
                       style={{ color: "#fff" }}
                     >
-                      {GUEST_TYPE_LABELS[key]}
+                      {t(`guestTypes.${key}`)}
                     </Text>
                   </Pressable>
                 );
@@ -910,7 +905,7 @@ export function CameraCapture() {
           {/* Budget level (optional) */}
           <View style={s.optionSection}>
             <Text type="body" weight="semibold" style={s.optionLabel}>
-              Budget (optional)
+              {t("camera.budgetLevel")}
             </Text>
             <ScrollView
               horizontal
@@ -930,7 +925,7 @@ export function CameraCapture() {
                       weight={selected ? "semibold" : "normal"}
                       style={{ color: "#fff" }}
                     >
-                      {BUDGET_LEVEL_LABELS[key]}
+                      {t(`budgetLevels.${key}`)}
                     </Text>
                   </Pressable>
                 );
@@ -938,7 +933,7 @@ export function CameraCapture() {
             </ScrollView>
             {budgetLevel && (
               <Text type="caption" style={{ color: "rgba(255,255,255,0.5)", marginTop: 4 }}>
-                {BUDGET_LEVEL_DESCRIPTIONS[budgetLevel]}
+                {t(`budgetDescriptions.${budgetLevel}`)}
               </Text>
             )}
           </View>
@@ -946,7 +941,7 @@ export function CameraCapture() {
           {/* Generate or Sign In */}
           {isAuthenticated ? (
             <Button
-              title="Transform Space"
+              title={t("camera.analyzeAndRedesign")}
               onPress={handleGenerate}
               disabled={!canGenerate}
               variant="solid"

@@ -2,6 +2,7 @@ import { Text } from "@/components/ui/Text";
 import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
 import { REGION_LABELS, HEMISPHERE_LABELS } from "@/constants/seasonal-tips";
 import type { PropertyRegion, Hemisphere } from "@/types/seasonal";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
 
 const REGIONS = Object.keys(REGION_LABELS) as PropertyRegion[];
@@ -20,6 +21,7 @@ export function RegionPicker({
   onHemisphereChange: (h: Hemisphere) => void;
   isDark?: boolean;
 }) {
+  const { t } = useTranslation();
   const chipBg = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)";
   const chipSelectedBg = isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.12)";
   const chipBorder = isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)";
@@ -29,7 +31,7 @@ export function RegionPicker({
   return (
     <View style={s.container}>
       <Text type="sm" weight="semibold" style={{ color: textColor, opacity: 0.6 }}>
-        Property location
+        {t("projectDetail.propertyLocation")}
       </Text>
       <View style={s.row}>
         {REGIONS.map((r) => {
@@ -48,7 +50,7 @@ export function RegionPicker({
                 weight={selected ? "semibold" : "normal"}
                 style={{ color: textColor }}
               >
-                {REGION_LABELS[r]}
+                {t(`regions.${r}`)}
               </Text>
             </Pressable>
           );
@@ -56,7 +58,7 @@ export function RegionPicker({
       </View>
 
       <Text type="sm" weight="semibold" style={{ color: textColor, opacity: 0.6, marginTop: SPACING.SM }}>
-        Hemisphere
+        {t("projectDetail.hemisphere")}
       </Text>
       <View style={s.row}>
         {HEMISPHERES.map((h) => {
@@ -75,7 +77,7 @@ export function RegionPicker({
                 weight={selected ? "semibold" : "normal"}
                 style={{ color: textColor }}
               >
-                {HEMISPHERE_LABELS[h]}
+                {t(`hemispheres.${h}`)}
               </Text>
             </Pressable>
           );

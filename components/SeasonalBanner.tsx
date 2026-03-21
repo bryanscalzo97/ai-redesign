@@ -6,6 +6,7 @@ import { REDESIGN_STYLE_LABELS, GUEST_TYPE_LABELS } from "@/types/redesign";
 import { getSeasonalRecommendation } from "@/lib/seasonal-engine";
 import type { Project } from "@/types/project";
 import type { Urgency } from "@/types/seasonal";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
@@ -24,6 +25,7 @@ export function SeasonalBanner({
   isDark: boolean;
 }) {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const recommendation = useMemo(() => {
     if (!project.region || !project.hemisphere) return null;
@@ -68,12 +70,12 @@ export function SeasonalBanner({
       <View style={s.tags}>
         <View style={[s.tag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
           <Text type="caption" style={{ color: textColor }}>
-            {REDESIGN_STYLE_LABELS[recommendation.styles[0]]}
+            {t(`redesignStyles.${recommendation.styles[0]}`)}
           </Text>
         </View>
         <View style={[s.tag, { backgroundColor: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)" }]}>
           <Text type="caption" style={{ color: textColor }}>
-            {GUEST_TYPE_LABELS[recommendation.guestType]}
+            {t(`guestTypes.${recommendation.guestType}`)}
           </Text>
         </View>
       </View>
@@ -91,7 +93,7 @@ export function SeasonalBanner({
       </View>
 
       <Button
-        title={`Refresh for ${recommendation.seasonLabel}`}
+        title={t("seasonalBanner.refreshFor", { season: recommendation.seasonLabel })}
         onPress={handleRefresh}
         variant="solid"
         size="md"

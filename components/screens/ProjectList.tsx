@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/Button";
 import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
@@ -43,6 +44,7 @@ function ProjectCard({
   onPress: () => void;
   isDark: boolean;
 }) {
+  const { t } = useTranslation();
   const count = project.redesigns.length;
   const date = new Date(project.updatedAt).toLocaleDateString();
 
@@ -95,7 +97,7 @@ function ProjectCard({
       ) : (
         <View style={[s.cardImage, s.cardPlaceholder]}>
           <Text type="lg" style={{ opacity: 0.3 }}>
-            No photos yet
+            {t("projectList.noPhotosYet")}
           </Text>
         </View>
       )}
@@ -121,7 +123,7 @@ function ProjectCard({
           darkColor="white"
           style={{ opacity: 0.5 }}
         >
-          {count} {count === 1 ? "room" : "rooms"} scanned · {date}
+          {t("projectList.roomsScanned", { count, rooms: count === 1 ? t("common.room") : t("common.rooms") })} · {date}
         </Text>
       </View>
     </ScalePress>
@@ -129,6 +131,7 @@ function ProjectCard({
 }
 
 export function ProjectList() {
+  const { t } = useTranslation();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
   const colorScheme = useColorScheme();
@@ -145,12 +148,12 @@ export function ProjectList() {
 
   const handleCreateProject = useCallback(() => {
     Alert.prompt(
-      "New Property",
-      "Enter a name for your property listing",
+      t("projectList.newProperty"),
+      t("projectList.enterPropertyName"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Create",
+          text: t("common.create"),
           onPress: async (name: string | undefined) => {
             if (name?.trim()) {
               const project = await createProject(name.trim());
@@ -200,7 +203,7 @@ export function ProjectList() {
       }
       ListHeaderComponent={
         <Button
-          title="New Property"
+          title={t("projectList.newProperty")}
           onPress={handleCreateProject}
           variant="solid"
           size="lg"
@@ -218,7 +221,7 @@ export function ProjectList() {
             darkColor="white"
             style={{ textAlign: "center" }}
           >
-            No properties yet
+            {t("projectList.noPropertiesYet")}
           </Text>
           <Text
             type="sm"
@@ -226,7 +229,7 @@ export function ProjectList() {
             darkColor="white"
             style={{ textAlign: "center", opacity: 0.5, marginTop: 4 }}
           >
-            Create a property to start organizing your redesigns.
+            {t("projectList.noPropertiesDesc")}
           </Text>
         </View>
       }
