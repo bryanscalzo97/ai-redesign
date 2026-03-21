@@ -2,6 +2,7 @@ import {
   createContext,
   use,
   useCallback,
+  useReducer,
   useRef,
   useState,
   type ReactNode,
@@ -11,6 +12,8 @@ import { ApiError } from "@/core/api-client";
 import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import type { RedesignCreationInput } from "@/types/redesign";
 import type { RoomAnalysis } from "@/types/room-analysis";
+
+// ── State ────────────────────────────────────────────────────────────────────
 
 export interface RedesignCreationState {
   image?: { uri: string; base64: string };
@@ -27,6 +30,81 @@ export interface RedesignCreationState {
   startedAt: Date;
   updatedAt: Date;
 }
+
+const TOTAL_STEPS = 3;
+
+const initialState: RedesignCreationState = {
+  image: undefined,
+  roomType: "",
+  style: "",
+  guestType: "",
+  customPrompt: "",
+  currentStep: 1,
+  generatedImage: undefined,
+  isGenerating: false,
+  error: undefined,
+  roomAnalysis: undefined,
+  isAnalyzing: false,
+  startedAt: new Date(),
+  updatedAt: new Date(),
+};
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+
+type Action =
+  | { type: "SET_IMAGE"; image: RedesignCreationState["image"] }
+  | { type: "SET_ROOM_TYPE"; roomType: string }
+  | { type: "SET_STYLE"; style: string }
+  | { type: "SET_GUEST_TYPE"; guestType: string }
+  | { type: "SET_CUSTOM_PROMPT"; customPrompt: string }
+  | { type: "SET_STEP"; step: number }
+  | { type: "NEXT_STEP" }
+  | { type: "PREV_STEP" }
+  | { type: "GENERATE_START" }
+  | { type: "GENERATE_SUCCESS"; imageData: string }
+  | { type: "GENERATE_ERROR"; error: string }
+  | { type: "ANALYSIS_START" }
+  | { type: "ANALYSIS_SUCCESS"; analysis: RoomAnalysis }
+  | { type: "ANALYSIS_FAIL" }
+  | { type: "RESET" };
+
+function reducer(state: RedesignCreationState, action: Action): RedesignCreationState {
+  const now = new Date();
+  switch (action.type) {
+    case "SET_IMAGE":
+      return { ...state, image: action.image, updatedAt: now };
+    case "SET_ROOM_TYPE":
+      return { ...state, roomType: action.roomType, updatedAt: now };
+    case "SET_STYLE":
+      return { ...state, style: action.style, updatedAt: now };
+    case "SET_GUEST_TYPE":
+      return { ...state, guestType: action.guestType, updatedAt: now };
+    case "SET_CUSTOM_PROMPT":
+      return { ...state, customPrompt: action.customPrompt, updatedAt: now };
+    case "SET_STEP":
+      return { ...state, currentStep: Math.max(1, Math.min(action.step, TOTAL_STEPS)), updatedAt: now };
+    case "NEXT_STEP":
+      return { ...state, currentStep: Math.min(state.currentStep + 1, TOTAL_STEPS), updatedAt: now };
+    case "PREV_STEP":
+      return { ...state, currentStep: Math.max(state.currentStep - 1, 1), updatedAt: now };
+    case "GENERATE_START":
+      return { ...state, isGenerating: true, error: undefined, generatedImage: undefined, updatedAt: now };
+    case "GENERATE_SUCCESS":
+      return { ...state, isGenerating: false, generatedImage: action.imageData, roomAnalysis: undefined, isAnalyzing: true, updatedAt: now };
+    case "GENERATE_ERROR":
+      return { ...state, isGenerating: false, error: action.error, updatedAt: now };
+    case "ANALYSIS_START":
+      return { ...state, isAnalyzing: true, roomAnalysis: undefined, updatedAt: now };
+    case "ANALYSIS_SUCCESS":
+      return { ...state, roomAnalysis: action.analysis, isAnalyzing: false, updatedAt: now };
+    case "ANALYSIS_FAIL":
+      return { ...state, isAnalyzing: false, updatedAt: now };
+    case "RESET":
+      return { ...initialState, startedAt: now, updatedAt: now };
+  }
+}
+
+// ── Context ──────────────────────────────────────────────────────────────────
 
 export interface RedesignCreationActions {
   setImage: (image: { uri: string; base64: string } | undefined) => void;
@@ -50,24 +128,6 @@ export interface RedesignCreationContextValue
   saveCount: number;
 }
 
-const TOTAL_STEPS = 3;
-
-const initialState: RedesignCreationState = {
-  image: undefined,
-  roomType: "",
-  style: "",
-  guestType: "",
-  customPrompt: "",
-  currentStep: 1,
-  generatedImage: undefined,
-  isGenerating: false,
-  error: undefined,
-  roomAnalysis: undefined,
-  isAnalyzing: false,
-  startedAt: new Date(),
-  updatedAt: new Date(),
-};
-
 export const RedesignCreationContext =
   createContext<RedesignCreationContextValue>({
     ...initialState,
@@ -87,71 +147,48 @@ export const RedesignCreationContext =
     notifySave: () => {},
   });
 
+// ── Provider ─────────────────────────────────────────────────────────────────
+
 export function RedesignCreationProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [state, setState] = useState<RedesignCreationState>(initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [saveCount, setSaveCount] = useState(0);
   const lastInputRef = useRef<RedesignCreationInput | null>(null);
 
   const setImage = useCallback(
-    (image: { uri: string; base64: string } | undefined) => {
-      setState((prev) => ({ ...prev, image, updatedAt: new Date() }));
-    },
-    []
+    (image: { uri: string; base64: string } | undefined) =>
+      dispatch({ type: "SET_IMAGE", image }),
+    [],
   );
-
-  const setRoomType = useCallback((roomType: string) => {
-    setState((prev) => ({ ...prev, roomType, updatedAt: new Date() }));
-  }, []);
-
-  const setStyle = useCallback((style: string) => {
-    setState((prev) => ({ ...prev, style, updatedAt: new Date() }));
-  }, []);
-
-  const setGuestType = useCallback((guestType: string) => {
-    setState((prev) => ({ ...prev, guestType, updatedAt: new Date() }));
-  }, []);
-
-  const setCustomPrompt = useCallback((customPrompt: string) => {
-    setState((prev) => ({ ...prev, customPrompt, updatedAt: new Date() }));
-  }, []);
-
-  const setCurrentStep = useCallback((step: number) => {
-    setState((prev) => ({
-      ...prev,
-      currentStep: Math.max(1, Math.min(step, TOTAL_STEPS)),
-      updatedAt: new Date(),
-    }));
-  }, []);
-
-  const nextStep = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      currentStep: Math.min(prev.currentStep + 1, TOTAL_STEPS),
-      updatedAt: new Date(),
-    }));
-  }, []);
-
-  const previousStep = useCallback(() => {
-    setState((prev) => ({
-      ...prev,
-      currentStep: Math.max(prev.currentStep - 1, 1),
-      updatedAt: new Date(),
-    }));
-  }, []);
+  const setRoomType = useCallback(
+    (roomType: string) => dispatch({ type: "SET_ROOM_TYPE", roomType }),
+    [],
+  );
+  const setStyle = useCallback(
+    (style: string) => dispatch({ type: "SET_STYLE", style }),
+    [],
+  );
+  const setGuestType = useCallback(
+    (guestType: string) => dispatch({ type: "SET_GUEST_TYPE", guestType }),
+    [],
+  );
+  const setCustomPrompt = useCallback(
+    (customPrompt: string) => dispatch({ type: "SET_CUSTOM_PROMPT", customPrompt }),
+    [],
+  );
+  const setCurrentStep = useCallback(
+    (step: number) => dispatch({ type: "SET_STEP", step }),
+    [],
+  );
+  const nextStep = useCallback(() => dispatch({ type: "NEXT_STEP" }), []);
+  const previousStep = useCallback(() => dispatch({ type: "PREV_STEP" }), []);
 
   const generate = useCallback(async (input: RedesignCreationInput) => {
     lastInputRef.current = input;
-    setState((prev) => ({
-      ...prev,
-      isGenerating: true,
-      error: undefined,
-      generatedImage: undefined,
-      updatedAt: new Date(),
-    }));
+    dispatch({ type: "GENERATE_START" });
 
     try {
       const data = await generateRedesign({
@@ -171,14 +208,7 @@ export function RedesignCreationProvider({
         console.error("Failed to save to library:", saveError);
       }
 
-      setState((prev) => ({
-        ...prev,
-        isGenerating: false,
-        generatedImage: data.imageData,
-        roomAnalysis: undefined,
-        isAnalyzing: true,
-        updatedAt: new Date(),
-      }));
+      dispatch({ type: "GENERATE_SUCCESS", imageData: data.imageData });
 
       // Fire both analyses in parallel: original image + redesigned image
       const analysisBody = {
@@ -197,24 +227,20 @@ export function RedesignCreationProvider({
           if (afterResult.analysis) {
             (analysis as any).afterScore = (afterResult.analysis as any).score;
           }
-          setState((prev) => ({
-            ...prev,
-            roomAnalysis: analysis as unknown as RoomAnalysis,
-            isAnalyzing: false,
-            updatedAt: new Date(),
-          }));
+          dispatch({
+            type: "ANALYSIS_SUCCESS",
+            analysis: analysis as unknown as RoomAnalysis,
+          });
         })
         .catch((err) => {
           console.error("Room analysis request failed:", err);
-          setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+          dispatch({ type: "ANALYSIS_FAIL" });
         });
     } catch (err) {
-      setState((prev) => ({
-        ...prev,
-        isGenerating: false,
+      dispatch({
+        type: "GENERATE_ERROR",
         error: err instanceof ApiError ? err.message : "Failed to connect to the server",
-        updatedAt: new Date(),
-      }));
+      });
     }
   }, []);
 
@@ -222,7 +248,7 @@ export function RedesignCreationProvider({
     const input = lastInputRef.current;
     if (!input) return;
 
-    setState((prev) => ({ ...prev, isAnalyzing: true, roomAnalysis: undefined, updatedAt: new Date() }));
+    dispatch({ type: "ANALYSIS_START" });
 
     try {
       const result = await analyzeRoomMutation({
@@ -232,14 +258,12 @@ export function RedesignCreationProvider({
         guestType: input.guestType,
         budgetLevel: input.budgetLevel,
       });
-      setState((prev) => ({
-        ...prev,
-        roomAnalysis: result.analysis as unknown as RoomAnalysis,
-        isAnalyzing: false,
-        updatedAt: new Date(),
-      }));
+      dispatch({
+        type: "ANALYSIS_SUCCESS",
+        analysis: result.analysis as unknown as RoomAnalysis,
+      });
     } catch {
-      setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+      dispatch({ type: "ANALYSIS_FAIL" });
     }
   }, []);
 
@@ -251,7 +275,7 @@ export function RedesignCreationProvider({
 
   const reset = useCallback(() => {
     lastInputRef.current = null;
-    setState({ ...initialState, startedAt: new Date(), updatedAt: new Date() });
+    dispatch({ type: "RESET" });
   }, []);
 
   const notifySave = useCallback(() => {
