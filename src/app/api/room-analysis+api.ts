@@ -1,8 +1,8 @@
 import https from "node:https";
-import { constants } from "@/server-utils/constants";
-import { extractMimeAndData } from "@/server-utils/generation-utils";
-import { buildRoomAnalysisPrompt } from "@/server-utils/room-analysis-utils";
-import { slog } from "@/server-utils/log";
+import { constants } from "@/core/server/constants";
+import { extractMimeAndData } from "@/core/server/generation-utils";
+import { buildRoomAnalysisPrompt } from "@/core/server/room-analysis-utils";
+import { slog } from "@/core/server/log";
 import { z } from "zod";
 
 function httpsPost(

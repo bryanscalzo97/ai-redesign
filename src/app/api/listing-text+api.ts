@@ -1,8 +1,8 @@
 import https from "node:https";
-import { constants } from "@/server-utils/constants";
-import { buildListingTextPrompt } from "@/server-utils/listing-text-utils";
-import { extractMimeAndData } from "@/server-utils/generation-utils";
-import { slog } from "@/server-utils/log";
+import { constants } from "@/core/server/constants";
+import { buildListingTextPrompt } from "@/core/server/listing-text-utils";
+import { extractMimeAndData } from "@/core/server/generation-utils";
+import { slog } from "@/core/server/log";
 import { z } from "zod";
 
 function httpsPost(

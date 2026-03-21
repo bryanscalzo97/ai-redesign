@@ -1,5 +1,5 @@
-import { slog } from "@/server-utils/log";
-import { auth } from "../lib/auth";
+import { slog } from "@/core/server/log";
+import { auth } from "@/lib/auth";
 
 /**
  * Middleware to authenticate API requests using better-auth sessions

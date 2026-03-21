@@ -1,11 +1,11 @@
-import { constants } from "@/server-utils/constants";
+import { constants } from "@/core/server/constants";
 import {
   buildRedesignPrompt,
   createGeminiErrorResponse,
   fetchGeminiWithRetry,
   toGeminiImageParts,
-} from "@/server-utils/generation-utils";
-import { slog } from "@/server-utils/log";
+} from "@/core/server/generation-utils";
+import { slog } from "@/core/server/log";
 import { z } from "zod";
 
 const RedesignRequestSchema = z.object({
