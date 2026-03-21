@@ -1,5 +1,5 @@
 import { Text } from "@/components/ui/Text";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { REGION_LABELS, HEMISPHERE_LABELS } from "@/constants/seasonal-tips";
 import type { PropertyRegion, Hemisphere } from "@/types/seasonal";
 import { useTranslation } from "react-i18next";

@@ -1,4 +1,4 @@
-import { AppTheme } from "@/constants/theme";
+import { AppTheme } from "@/theme/appTheme";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UIColor } from "@/types/ui";
 import { getColorValue } from "@/utils/colorUtils";

@@ -3,8 +3,8 @@ import {
   COLOR_SHADES,
   OPACITY,
   THEME_SHADES,
-} from "@/constants/designTokens";
-import { AppTheme } from "@/constants/theme";
+} from "@/theme/dimensions";
+import { AppTheme } from "@/theme/appTheme";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ColorConfig, InputColorConfig, UIColor } from "@/types/ui";

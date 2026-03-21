@@ -4,7 +4,7 @@ import { RegionPicker } from "@/components/RegionPicker";
 import { Button } from "@/components/ui/Button";
 import { ScalePress } from "@/components/ui/ScalePress";
 import { Text } from "@/components/ui/Text";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { REGION_LABELS } from "@/constants/seasonal-tips";
 import {
   surface,
@@ -12,7 +12,7 @@ import {
   getScoreCategory,
   getScoreLabel,
   textMuted,
-} from "@/constants/semanticColors";
+} from "@/theme/semantic";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useProjects } from "@/context/ProjectContext";

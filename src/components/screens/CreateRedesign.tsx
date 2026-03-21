@@ -5,7 +5,7 @@ import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { usePlatform } from "@/hooks/usePlatform";
-import { AppTheme } from "@/constants/theme";
+import { AppTheme } from "@/theme/appTheme";
 import {
   REDESIGN_STYLE_LABELS,
   ROOM_TYPE_LABELS,

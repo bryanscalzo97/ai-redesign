@@ -1,4 +1,4 @@
-import { COMPONENT_HEIGHT, FONT_SIZE, SPACING } from "@/constants/designTokens";
+import { COMPONENT_HEIGHT, FONT_SIZE, SPACING } from "@/theme/dimensions";
 import { useVariantConfig } from "@/hooks/useVariantConfig";
 import {
   InputColorConfig,

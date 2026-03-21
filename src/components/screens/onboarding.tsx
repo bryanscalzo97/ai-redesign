@@ -1,7 +1,7 @@
 import LinearGradientImageBlur from "@/components/LinearGradientImageBlur";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { AuthContext } from "@/context/AuthContext";
 import { use, useState } from "react";
 import { useTranslation } from "react-i18next";

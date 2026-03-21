@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";
 import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import { shareBase64Image } from "@/lib/share-image";

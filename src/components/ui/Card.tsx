@@ -1,5 +1,5 @@
-import { Colors } from "@/constants/Colors";
-import { BORDER_RADIUS, BORDER_WIDTH } from "@/constants/designTokens";
+import { Colors } from "@/theme/colors";
+import { BORDER_RADIUS, BORDER_WIDTH } from "@/theme/dimensions";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ReactNode } from "react";
 import { Pressable, StyleSheet, ViewStyle } from "react-native";

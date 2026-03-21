@@ -1,6 +1,6 @@
 import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { REGION_LABELS } from "@/constants/seasonal-tips";
 import { REDESIGN_STYLE_LABELS, GUEST_TYPE_LABELS } from "@/types/redesign";
 import { getSeasonalRecommendation } from "@/lib/seasonal-engine";

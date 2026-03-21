@@ -2,7 +2,7 @@ import {
   BORDER_RADIUS,
   FONT_SIZE,
   SPACING,
-} from "@/constants/designTokens";
+} from "@/theme/dimensions";
 import { StyleSheet } from "react-native";
 
 export const createRedesignStyles = StyleSheet.create({

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { useAccentColor } from "@/hooks/useAccentColor";
-import { SPACING } from "@/constants/designTokens";
+import { SPACING } from "@/theme/dimensions";
 import { shareBase64Image } from "@/lib/share-image";
 import { Image } from "expo-image";
 import * as MediaLibrary from "expo-media-library";

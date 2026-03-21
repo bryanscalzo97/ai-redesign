@@ -4,7 +4,7 @@ import {
   FONT_SIZE,
   OPACITY,
   SPACING,
-} from "@/constants/designTokens";
+} from "@/theme/dimensions";
 import { useVariantConfig } from "@/hooks/useVariantConfig";
 import { RADIUS_VALUES, UIColor, UIRadius, UISize } from "@/types/ui";
 // Lazy-loaded heavy dependencies - imported only when needed

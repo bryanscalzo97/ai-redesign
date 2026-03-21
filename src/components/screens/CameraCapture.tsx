@@ -5,7 +5,7 @@ import { Text } from "@/components/ui/Text";
 import {
   BORDER_RADIUS,
   SPACING,
-} from "@/constants/designTokens";
+} from "@/theme/dimensions";
 import {
   BUDGET_LEVEL_LABELS,
   BUDGET_LEVEL_DESCRIPTIONS,
@@ -19,7 +19,7 @@ import {
   type RoomType,
 } from "@/types/redesign";
 import { HOST_INSIGHTS } from "@/constants/host-insights";
-import { getScoreCategory } from "@/constants/semanticColors";
+import { getScoreCategory } from "@/theme/semantic";
 import { AuthContext } from "@/context/AuthContext";
 import { useProjects } from "@/context/ProjectContext";
 import { useRedesignCreation } from "@/context/RedesignCreationContext";

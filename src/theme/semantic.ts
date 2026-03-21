@@ -1,5 +1,5 @@
-import { Colors } from "./Colors";
-import { AppTheme } from "./theme";
+import { Colors } from "./colors";
+import { AppTheme } from "./appTheme";
 
 /**
  * Semantic color tokens for consistent UI across the app.

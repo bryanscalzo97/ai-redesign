@@ -1,5 +1,5 @@
 import "@/i18n";
-import { DURATION } from "@/constants/designTokens";
+import { DURATION } from "@/theme/dimensions";
 import { AuthContext, AuthProvider } from "@/context/AuthContext";
 import { ProjectProvider } from "@/context/ProjectContext";
 import { RedesignCreationProvider } from "@/context/RedesignCreationContext";

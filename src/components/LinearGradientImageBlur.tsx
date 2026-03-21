@@ -1,6 +1,6 @@
 import LinearGradientComponent from "@/components/LinearGradient";
 import { LazyImage } from "@/components/ui/LazyImage";
-import { Colors } from "@/constants/Colors";
+import { Colors } from "@/theme/colors";
 import MaskedView from "@react-native-masked-view/masked-view";
 import type { BlurTint } from "expo-blur";
 import { BlurView } from "expo-blur";

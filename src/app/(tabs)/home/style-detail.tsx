@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
-import { SPACING, BORDER_RADIUS } from "@/constants/designTokens";
+import { SPACING, BORDER_RADIUS } from "@/theme/dimensions";
 import { findStyleByKey, findRoomTypeByKey, findGuestTypeByKey } from "@/constants/redesign-data";
 import { useAccentColor } from "@/hooks/useAccentColor";
 import { useColorScheme } from "@/hooks/useColorScheme";

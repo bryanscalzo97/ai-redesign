@@ -1,5 +1,5 @@
 import { appConfig } from '@/config/app';
-import { Colors as ColorPalette } from './Colors';
+import { Colors as ColorPalette } from './colors';
 
 const brand = appConfig.theme.brand;
 const primaryLight = typeof brand.primary === 'string' ? brand.primary : brand.primary.light;
