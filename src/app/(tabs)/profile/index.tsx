@@ -106,7 +106,7 @@ function LinkRow({
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, user } = use(AuthContext);
+  const { isAuthenticated, user, setIsOnboarded } = use(AuthContext);
   const { projects, deleteProject } = useProjects();
   const { getBackgroundColor } = useAccentColor();
   const backgroundColor = getBackgroundColor();
@@ -263,6 +263,33 @@ export default function ProfileScreen() {
             </SectionCard>
           </View>
         )}
+
+        {/* Replay Onboarding */}
+        <View style={s.section}>
+          <SectionCard>
+            <Pressable
+              onPress={() => {
+                Alert.alert(
+                  "Replay Onboarding",
+                  "This will reset the onboarding flow so you can see it again.",
+                  [
+                    { text: t("common.cancel"), style: "cancel" },
+                    {
+                      text: "Reset",
+                      onPress: () => setIsOnboarded(false),
+                    },
+                  ]
+                );
+              }}
+              style={s.linkRow}
+            >
+              <Text type="default" lightColor="black" darkColor="white">
+                Replay Onboarding
+              </Text>
+              <Icon symbol="arrow.counterclockwise" size="xs" color={isDark ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)"} />
+            </Pressable>
+          </SectionCard>
+        </View>
 
         {/* Data Management */}
         {projects.length > 0 && (

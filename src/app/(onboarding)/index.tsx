@@ -1,5 +1,5 @@
-import { Onboarding } from "@/components/screens/onboarding";
+import OnboardingV2 from "@/components/onboarding/OnboardingV2";
 
 export default function OnboardingScreen() {
-  return <Onboarding />;
+  return <OnboardingV2 />;
 }

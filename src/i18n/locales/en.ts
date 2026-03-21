@@ -252,6 +252,10 @@ export default {
   onboarding: {
     stepOf: "Step {{current}} of {{total}}",
     getStarted: "Get started",
+    continue: "Continue",
+    letsGo: "Let's go",
+    alreadyHaveAccount: "Already have an account?",
+    signIn: "Sign In",
     steps: [
       {
         title: "Scan your spaces",

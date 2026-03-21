@@ -6,6 +6,15 @@
  * - Colors[colorName][shade] (e.g., Colors.blue[500])
  * - Each color has shades from 50 (lightest) to 950 (darkest)
  */
+/**
+ * Brand color used across the app for primary actions (buttons, icons, accents).
+ * Extracted from Figma design system.
+ */
+export const Brand = {
+    purple: "#402060",
+    purpleLight: "#D4C9FF",
+} as const;
+
 export const Colors = {
     grayscale: {
         50:  "#FFFFFF",
