@@ -1,3 +1,5 @@
+import { generateListingText } from "@/core/mutations";
+import { ApiError } from "@/core/api-client";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -256,24 +258,15 @@ export function CameraCapture() {
     if (!roomType || !style) return;
     setIsGeneratingText(true);
     try {
-      const response = await fetch("/api/listing-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomType,
-          style,
-          guestType: guestType ?? undefined,
-          image_base64: generatedImage ?? undefined,
-        }),
+      const data = await generateListingText({
+        roomType,
+        style,
+        guestType: guestType ?? undefined,
+        image_base64: generatedImage ?? undefined,
       });
-      const data = await response.json();
-      if (data.success && data.listingText) {
-        setListingText(data.listingText);
-      } else {
-        Alert.alert(t("common.error"), data.error || t("camera.failedToSave"));
-      }
-    } catch {
-      Alert.alert(t("common.error"), t("camera.failedToSave"));
+      setListingText(data.listingText);
+    } catch (err) {
+      Alert.alert(t("common.error"), err instanceof ApiError ? err.message : t("camera.failedToSave"));
     } finally {
       setIsGeneratingText(false);
     }

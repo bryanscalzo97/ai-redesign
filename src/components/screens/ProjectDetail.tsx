@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { analyzeRoom, generateListingText } from "@/core/mutations";
+import { ApiError } from "@/core/api-client";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { RegionPicker } from "@/components/RegionPicker";
 import { Button } from "@/components/ui/Button";
@@ -175,29 +177,21 @@ function RedesignExpandedView({
         return;
       }
 
-      const response = await fetch("/api/room-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: imageBase64,
-          roomType: entry.roomType,
-          style: entry.style,
-          guestType: entry.guestType,
-        }),
+      const data = await analyzeRoom({
+        image_base64: imageBase64,
+        roomType: entry.roomType,
+        style: entry.style,
+        guestType: entry.guestType,
       });
-      const data = await response.json();
-      if (data.success && data.analysis) {
-        await updateRedesignAnalysis(projectId, entry.id, data.analysis);
-        Alert.alert(
-          t("projectDetail.analysisComplete"),
-          t("projectDetail.analysisCompleteMsg", { score: data.analysis.score.toFixed(1), count: data.analysis.suggestions?.length ?? 0 }),
-          [{ text: t("common.ok"), onPress: onClose }]
-        );
-      } else {
-        Alert.alert(t("common.error"), data.error || t("projectDetail.failedAnalyze"));
-      }
-    } catch {
-      Alert.alert(t("common.error"), t("projectDetail.failedConnect"));
+      const analysis = data.analysis as any;
+      await updateRedesignAnalysis(projectId, entry.id, analysis);
+      Alert.alert(
+        t("projectDetail.analysisComplete"),
+        t("projectDetail.analysisCompleteMsg", { score: analysis.score.toFixed(1), count: analysis.suggestions?.length ?? 0 }),
+        [{ text: t("common.ok"), onPress: onClose }]
+      );
+    } catch (err) {
+      Alert.alert(t("common.error"), err instanceof ApiError ? err.message : t("projectDetail.failedConnect"));
     } finally {
       setIsAnalyzing(false);
     }
@@ -214,25 +208,16 @@ function RedesignExpandedView({
         // ignore — will generate without image
       }
 
-      const response = await fetch("/api/listing-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomType: entry.roomType,
-          style: entry.style,
-          guestType: entry.guestType,
-          image_base64: imageBase64,
-        }),
+      const data = await generateListingText({
+        roomType: entry.roomType,
+        style: entry.style,
+        guestType: entry.guestType,
+        image_base64: imageBase64,
       });
-      const data = await response.json();
-      if (data.success && data.listingText) {
-        setListingText(data.listingText);
-        await updateRedesignListingText(projectId, entry.id, data.listingText);
-      } else {
-        Alert.alert(t("common.error"), data.error || t("projectDetail.failedListingText"));
-      }
-    } catch {
-      Alert.alert(t("common.error"), t("projectDetail.failedConnect"));
+      setListingText(data.listingText);
+      await updateRedesignListingText(projectId, entry.id, data.listingText);
+    } catch (err) {
+      Alert.alert(t("common.error"), err instanceof ApiError ? err.message : t("projectDetail.failedConnect"));
     } finally {
       setIsGeneratingText(false);
     }
@@ -969,20 +954,13 @@ export function ProjectDetail() {
         }
         if (!imageBase64) continue;
 
-        const response = await fetch("/api/room-analysis", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            image_base64: imageBase64,
-            roomType: entry.roomType,
-            style: entry.style,
-            guestType: entry.guestType,
-          }),
+        const data = await analyzeRoom({
+          image_base64: imageBase64,
+          roomType: entry.roomType,
+          style: entry.style,
+          guestType: entry.guestType,
         });
-        const data = await response.json();
-        if (data.success && data.analysis) {
-          await updateRedesignAnalysis(project.id, entry.id, data.analysis);
-        }
+        await updateRedesignAnalysis(project.id, entry.id, data.analysis as any);
       } catch {
         // continue with next
       }

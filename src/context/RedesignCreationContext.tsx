@@ -6,6 +6,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { generateRedesign, analyzeRoom as analyzeRoomMutation } from "@/core/mutations";
+import { ApiError } from "@/core/api-client";
 import { saveBase64ToAlbum } from "@/lib/save-to-library";
 import type { RedesignCreationInput } from "@/types/redesign";
 import type { RoomAnalysis } from "@/types/room-analysis";
@@ -152,30 +154,14 @@ export function RedesignCreationProvider({
     }));
 
     try {
-      const response = await fetch("/api/redesign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: input.imageBase64,
-          roomType: input.roomType,
-          style: input.style,
-          customPrompt: input.customInstructions,
-          guestType: input.guestType,
-          budgetLevel: input.budgetLevel,
-        }),
+      const data = await generateRedesign({
+        image_base64: input.imageBase64,
+        roomType: input.roomType,
+        style: input.style,
+        customPrompt: input.customInstructions,
+        guestType: input.guestType,
+        budgetLevel: input.budgetLevel,
       });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        setState((prev) => ({
-          ...prev,
-          isGenerating: false,
-          error: data.error || "Something went wrong",
-          updatedAt: new Date(),
-        }));
-        return;
-      }
 
       // Save to photo library automatically
       try {
@@ -202,45 +188,31 @@ export function RedesignCreationProvider({
         budgetLevel: input.budgetLevel,
       };
 
-      const beforeAnalysis = fetch("/api/room-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...analysisBody, image_base64: input.imageBase64 }),
-      }).then((res) => res.json());
-
-      const afterAnalysis = fetch("/api/room-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...analysisBody, image_base64: data.imageData }),
-      }).then((res) => res.json());
-
-      Promise.all([beforeAnalysis, afterAnalysis])
+      Promise.all([
+        analyzeRoomMutation({ ...analysisBody, image_base64: input.imageBase64 }),
+        analyzeRoomMutation({ ...analysisBody, image_base64: data.imageData }),
+      ])
         .then(([beforeResult, afterResult]) => {
-          if (beforeResult.success && beforeResult.analysis) {
-            const analysis = beforeResult.analysis;
-            if (afterResult.success && afterResult.analysis) {
-              analysis.afterScore = afterResult.analysis.score;
-            }
-            setState((prev) => ({
-              ...prev,
-              roomAnalysis: analysis,
-              isAnalyzing: false,
-              updatedAt: new Date(),
-            }));
-          } else {
-            console.error("Room analysis failed:", beforeResult.error || "Unknown error");
-            setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
+          const analysis = beforeResult.analysis;
+          if (afterResult.analysis) {
+            (analysis as any).afterScore = (afterResult.analysis as any).score;
           }
+          setState((prev) => ({
+            ...prev,
+            roomAnalysis: analysis as unknown as RoomAnalysis,
+            isAnalyzing: false,
+            updatedAt: new Date(),
+          }));
         })
         .catch((err) => {
           console.error("Room analysis request failed:", err);
           setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
         });
-    } catch {
+    } catch (err) {
       setState((prev) => ({
         ...prev,
         isGenerating: false,
-        error: "Failed to connect to the server",
+        error: err instanceof ApiError ? err.message : "Failed to connect to the server",
         updatedAt: new Date(),
       }));
     }
@@ -253,23 +225,19 @@ export function RedesignCreationProvider({
     setState((prev) => ({ ...prev, isAnalyzing: true, roomAnalysis: undefined, updatedAt: new Date() }));
 
     try {
-      const response = await fetch("/api/room-analysis", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image_base64: input.imageBase64,
-          roomType: input.roomType,
-          style: input.style,
-          guestType: input.guestType,
-          budgetLevel: input.budgetLevel,
-        }),
+      const result = await analyzeRoomMutation({
+        image_base64: input.imageBase64,
+        roomType: input.roomType,
+        style: input.style,
+        guestType: input.guestType,
+        budgetLevel: input.budgetLevel,
       });
-      const result = await response.json();
-      if (result.success && result.analysis) {
-        setState((prev) => ({ ...prev, roomAnalysis: result.analysis, isAnalyzing: false, updatedAt: new Date() }));
-      } else {
-        setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
-      }
+      setState((prev) => ({
+        ...prev,
+        roomAnalysis: result.analysis as unknown as RoomAnalysis,
+        isAnalyzing: false,
+        updatedAt: new Date(),
+      }));
     } catch {
       setState((prev) => ({ ...prev, isAnalyzing: false, updatedAt: new Date() }));
     }
